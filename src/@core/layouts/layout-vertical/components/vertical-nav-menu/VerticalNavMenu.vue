@@ -25,7 +25,7 @@
           <li class="nav-item mr-auto">
             <b-link
               class="navbar-brand"
-              to="/"
+              :to="url"
             >
               <span class="brand-logo">
                 <b-img
@@ -91,6 +91,7 @@ import useAppConfig from '@core/app-config/useAppConfig'
 import { $themeConfig } from '@themeConfig'
 import VerticalNavMenuItems from './components/vertical-nav-menu-items/VerticalNavMenuItems.vue'
 import useVerticalNavMenu from './useVerticalNavMenu'
+import { getHomeRouteForLoggedInUser } from '@/auth/utils'
 
 export default {
   components: {
@@ -113,6 +114,17 @@ export default {
       required: true,   // ✅ must always come from parent
     },
   },
+  data(){
+    return {
+      url:null
+    }
+  },
+  mounted() {
+      // alert();
+      this.url = getHomeRouteForLoggedInUser(this.$store.state.auth?.user?.type?.name)
+
+
+  },      
   setup(props) {
     const {
       isMouseHovered,

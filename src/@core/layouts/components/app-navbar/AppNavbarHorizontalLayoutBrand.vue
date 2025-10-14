@@ -4,7 +4,7 @@
       <li class="nav-item">
         <b-link
           class="navbar-brand"
-          to="/"
+          to="attendance"
         >
           <span class="brand-logo">
             <b-img
@@ -30,6 +30,9 @@ export default {
     BLink,
     BImg,
   },
+  mounted(){
+    alert();
+  },
   setup() {
     // App Name
     const { appName, appLogoImage } = $themeConfig.app
@@ -38,6 +41,7 @@ export default {
       appLogoImage,
     }
   },
+  
 }
 </script>
 

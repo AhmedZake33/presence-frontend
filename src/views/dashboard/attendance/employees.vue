@@ -2,18 +2,19 @@
   <div>
     <loading :visible="load" text="Processing..." />
 
-    <b-button
+    <!-- <b-button
       variant="primary"
       class="mb-1 mb-sm-0 mr-0 mr-sm-1"
       @click="showModal = true"
     >
       Add New User
-    </b-button>
+    </b-button> -->
 
     <b-modal
       v-model="showModal"
       title="Add New User"
       @hidden="resetForm"
+      hide-footer
     >
     <b-form @submit.prevent="submitForm">
       <b-form-group label="Name" label-for="name">
@@ -37,9 +38,20 @@
         <b-form-select
           id="type"
           v-model="form.type"
-          :options="types"
           required
-        ></b-form-select>
+        >
+            <option :value="null" disabled>
+                {{ $t("Please select an type") }}
+            </option>
+          <option
+            v-for="type in types"
+            :id="`slot-option-${type.id}`"
+            :key="type.id"
+            :value="type.id"
+          >
+            {{ type["value"] }}
+          </option>
+    </b-form-select>
       </b-form-group>
 
       <b-form-group label="Password" label-for="Password">
@@ -58,6 +70,8 @@
       title="Users List"
       :items="users"
       :fields="fields"
+      :add="true"
+      @add="showModal = true"
     >
       
     </base-table>
@@ -76,15 +90,17 @@ export default {
       fields: [
         { key: 'name', label: 'Name' },
         {key: 'check_in', label: 'Check In'},
+        {key: 'browser_in', label: 'browser'},
         {key: 'check_out', label: 'Check Out'},
+        {key: 'browser_out', label: 'browser'},
       ],
       users: [],
       load: false,
       showModal: false,
       form: {},
       types: [
-        { value: 'admin', text: 'Admin' },
-        { value: 'employee', text: 'Employee' },
+        { id: 1, value: 'admin', text: 'Admin' },
+        { id: 2, value: 'employee', text: 'Employee' },
       ],
         
     }

@@ -113,7 +113,7 @@ export default {
     },
   filteredNavItems() {
     const role = this.$store.getters['auth/userRole']
-    console.log('Current role:', role)
+    // console.log('Current role:', role)
 
     function filterByRole(items) {
       return items
@@ -144,7 +144,7 @@ export default {
     }
 
     const filtered = filterByRole(require('@/navigation/vertical').default)
-    console.log('Filtered nav items:', filtered)
+    // console.log('Filtered nav items:', filtered)
     return filtered
   },
 

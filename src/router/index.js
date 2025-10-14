@@ -40,9 +40,20 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
+  const user = JSON.parse(localStorage.getItem('user'))
+
+  // console.log('roles'+to);
+  // console.log('to object:', JSON.stringify(to, null, 2))
 
   if (!token && to.name !== 'auth-login') {
     return next({ name: 'auth-login' })
+  }
+
+  if (to.meta.roles && user) {
+    const hasAccess = to.meta.roles.includes(user.type.name)
+    if (!hasAccess) {
+      return next({ name: 'error-404' }) // 🚫 redirect to 404
+    }
   }
 
   return next()

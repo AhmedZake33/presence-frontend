@@ -12,6 +12,17 @@ import verticalMenu from './vertical-menu'
 Vue.use(Vuex)
 
 export default new Vuex.Store({
+  state: {
+    user: null,
+  },
+  mutations: {
+    setUser(state, user) {
+      state.user = user
+    },
+  },
+  getters: {
+    user: state => state.user,
+  },
   modules: {
     app,
     appConfig,
