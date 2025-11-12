@@ -33,6 +33,12 @@ export default [
         icon: 'CalendarIcon',
         route: 'attendance', 
       },
+      {
+        title: 'settings',
+        icon: 'SettingsIcon',
+        route: 'settings',
+        meta: { role: ['admin'] },
+      }
       
 ]
 

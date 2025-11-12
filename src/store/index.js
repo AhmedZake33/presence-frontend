@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import auth from './modules/auth'
+import settings from './modules/settings'
 
 
 // Modules
@@ -29,6 +30,7 @@ export default new Vuex.Store({
     verticalMenu,
     'app-ecommerce': ecommerceStoreModule,
     auth,
+    settings,
   },
   strict: process.env.DEV,
 })

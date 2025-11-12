@@ -27,13 +27,10 @@ export default {
   },
   actions: {
     // Fake login example (replace with real API call)
-    login({ commit }, { username, password }) {
-      // Normally you call an API here
-      const fakeToken = '123456'
-      const fakeUser = { id: 1, name: username, role: 'user' } // change role if needed
-
-      commit('SET_TOKEN', fakeToken)
-      commit('SET_USER', fakeUser)
+    login({ commit }, { response }) {
+      console.log('response' + response);
+      commit('SET_TOKEN', response.data.token)
+      commit('SET_USER', response.data.user)
     },
     logout({ commit }) {
       commit('LOGOUT')

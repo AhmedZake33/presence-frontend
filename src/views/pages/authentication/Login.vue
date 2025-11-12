@@ -283,6 +283,12 @@ export default {
       password: this.password,
     });
 
+    try{
+      await store.dispatch('auth/login', { response:res })
+    }catch(err){
+      console.log(err);
+    }
+
     // save token + user
     localStorage.setItem("token", res.data.token);
     localStorage.setItem("user", JSON.stringify(res.data.user));
