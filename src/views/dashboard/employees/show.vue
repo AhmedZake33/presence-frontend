@@ -1,5 +1,6 @@
 <template>
   <div>
+    <loading :visible="loading" text="Processing..." />
     <b-card>
       <b-row>
         <b-col>
@@ -12,12 +13,15 @@
         </b-col>
       </b-row>
     </b-card>
-    <BaseTable
+     <BaseTable
       title="Attendance"
       :items="flatRecords"
       :fields="fields"
       :paginated="true"
       :per-page="perPage"
+      :total-rows="totalRows"
+      @page-changed="onPageChange"
+      @per-page-changed="onPerPageChange"
     >
       <!-- format date cell -->
       <template #cell(date)="data">
@@ -38,21 +42,28 @@
     </BaseTable>
   </div>
 </template>
+  </div>
+</template>
 
 <script>
 import api from '@/libs/axios'
 import moment from 'moment' // optional
 import  BaseTable  from '@/views/components/my-components/table.vue'
+import loading from '@/views/components/my-components/loading.vue'
+
 export default {
   name: 'EmployeeAttendanceUsingBaseTable',
-  components: { BaseTable },
+  components: { BaseTable,loading },
   data() {
     return {
         employeeId: this.$route.params.employeeId,
         employee: {},
       attendanceGrouped: [], // API grouped by date
       flatRecords: [],       // flattened rows
+      currentPage: 1,
       perPage: 10,
+      totalRows: 0,
+      loading: false,
       fields: [
         { key: 'date', label: 'Date' },
         { key: 'check_in', label: 'Check In' },
@@ -62,20 +73,55 @@ export default {
     }
   },
   methods: {
-    async load() {
+
+    onPageChange(page) {
+      this.$emit('page-changed', {
+        page: page,
+        perPage: this.perPage
+      })
+      this.load(page.page, this.perPage)
+    },
+    
+    onPerPageChange(perPage) {
+      this.currentPage = 1
+      this.$emit('per-page-changed', {
+        page: this.currentPage,
+        perPage: perPage
+      })
+      console.log("onPerPageChange")
+      console.log(perPage)
+      this.load(perPage.page, perPage.perPage)
+    },
+    
+    // Method to reset to first page (useful when filtering)
+    resetPagination() {
+      this.currentPage = 1
+    },
+    async load(page = 1, perPage = 10) {
       try {
-        const res = await api.get(`/employees/${this.employeeId}/attendance`)
-        // adapt to your API response shape:
-        // either res.data.attendance (grouped) or res.data (if already grouped)
-        // console.log(res.data.attendance)
-        this.attendanceGrouped = res.data.attendance || res.data
+        this.loading = true
+        const payload = {
+          employeeId: this.employeeId,
+          perPage: perPage,
+          page: page
+        }
+        const res = await api.post(`/employees/${this.employeeId}/attendance`, payload)
+        this.attendanceGrouped = res.data.data || res.data
+        console.log("attendanceGrouped")
+        console.log(res.data.data)
+        this.totalRows = res.data.total || res.data.length;
+        this.currentPage = page;
+        this.perPage = perPage;
         this.employee = res.data.employee
         this.flatten()
       } catch (e) {
         console.error(e)
+        this.loading = false
       }
+      this.loading = false
     },
     flatten() {
+
       var flat = []
       
        if(this.attendanceGrouped.length === 0){
@@ -84,19 +130,18 @@ export default {
 
       (this.attendanceGrouped).forEach(day => {
         const date = day.date
-        if(day.records.length === 0){
-          return;
-        }
-        (day.records).forEach(rec => {
-          flat.push({
+        const check_in = day.check_in ? day.check_in : null
+        const check_out = day.check_out ? day.check_out : null
+        const hours = day.total_hours ? day.total_hours : null
+
+        flat.push({
             date,
-            check_in: rec.check_in || null,
-            check_out: rec.check_out || null,
-            hours: typeof rec.hours !== 'undefined' ? rec.hours : this.calcHours(rec.check_in, rec.check_out),
-          })
-         
-          
+            check_in,
+            check_out,
+            hours,
         })
+        console.log('flat')
+        console.log(flat)
       })
       // optional sorting newest first
       flat.sort((a, b) => (a.date === b.date ? (a.check_in > b.check_in ? 1 : -1) : (a.date < b.date ? 1 : -1)))

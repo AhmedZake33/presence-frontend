@@ -3,6 +3,21 @@ export default [
         path: '/settings',
         name: 'settings',
         component: () => import('@/views/setting/Setting.vue'),
+        meta: {
+            layout: 'content', // Vuexy’s main layout (with sidebar)
+            requiresAuth: true,
+            roles: ['admin'],
+            breadcrumb: [
+              {
+                text: 'Dashboard',
+                to: '/dashboard',
+              },
+              {
+                text: 'Settings',
+                active: true,
+              },
+            ],
+        },
     },
 //     {
 //   path: '/settings',

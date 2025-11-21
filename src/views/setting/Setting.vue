@@ -6,7 +6,6 @@
         <b-button variant="primary" @click="reloadAll">Reload</b-button>
       </b-col>
     </b-row>
-
     <b-row>
       <b-col md="4">
         <b-card>
@@ -30,9 +29,10 @@
             </b-list-group-item>
           </b-list-group>
 
-          <div class="mt-3">
+
+          <!-- <div class="mt-3">
             <b-button size="sm" variant="success" @click="openCreatePrompt">Create new setting</b-button>
-          </div>
+          </div> -->
         </b-card>
       </b-col>
 

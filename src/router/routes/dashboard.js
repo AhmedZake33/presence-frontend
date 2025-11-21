@@ -20,7 +20,7 @@ export default [
     },
   },
   {
-    path: '/emplyees',
+    path: '/employees',
     name: 'attendance-employees',
     component: () => import('@/views/dashboard/attendance/employees.vue'),
     meta: {
@@ -37,6 +37,20 @@ export default [
       layout: 'content', // Vuexy’s main layout (with sidebar)
       requiresAuth: true,
       roles: ['admin'],
+      breadcrumb: [
+        {
+          text: 'Dashboard',
+          to: '/dashboard',
+        },
+        {
+          text: 'Employees',
+          to: '/employees',
+        },
+        {
+          text: 'Detail',
+          active: true,
+        },
+      ],
     }
   }
 ]
