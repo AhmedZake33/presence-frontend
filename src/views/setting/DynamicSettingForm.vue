@@ -12,9 +12,9 @@
           <!-- Repeater (list of objects) -->
           <div v-if="field.type === 'repeater'">
             <label class="font-weight-bold d-block mb-2">{{ field.label }}</label>
-            <!--<b-button size="sm" variant="success" class="mb-2" @click="addRepeaterItem(field.key, field.itemFields)">
+            <b-button size="sm" variant="success" class="mb-2" @click="addRepeaterItem(field.key, field.itemFields)">
               Add {{ field.label }}
-            </b-button>-->
+            </b-button>
 
             <div v-if="!Array.isArray(local[field.key]) || local[field.key].length === 0" class="text-muted small">
               No items yet
@@ -137,7 +137,7 @@ export default {
       local: {},
       jsonText: '',
       saving: false,
-      debug: false, // Set to false in production
+      debug: true, // Set to false in production
       schemaMap: {
         attendance_rules: {
           fields: [
@@ -166,7 +166,7 @@ export default {
                 { key: 'days_per_year', label: 'Days per Year', type: 'number', props: { min: 0 } },
                 // { key: 'carry_over_allowed', label: 'Carry Over Allowed', type: 'checkbox' },
                 // { key: 'max_carry_over_days', label: 'Max Carry Over Days', type: 'number', props: { min: 0 } },
-                // { key: 'requires_approval', label: 'Requires Approval', type: 'checkbox' }
+                { key: 'requires_approval', label: 'Requires Approval', type: 'checkbox' }
               ]
             },
             // {
@@ -273,6 +273,7 @@ export default {
 
     addRepeaterItem(key, itemFields) {
       console.log('Adding repeater item:', key, itemFields)
+      
       if (!Array.isArray(this.local[key])) {
         this.local[key] = []
       }
@@ -283,13 +284,18 @@ export default {
       })
       
       this.local[key].push(newItem)
+      
+      // Force Vue to update
+      this.$forceUpdate()
     },
-
-    removeRepeaterItem(key, index) {
-      if (Array.isArray(this.local[key])) {
-        this.local[key].splice(index, 1)
-      }
-    },
+  removeRepeaterItem(key, index) {
+    if (Array.isArray(this.local[key]) && this.local[key].length > index) {
+      this.local[key].splice(index, 1)
+      
+      // Force Vue to update, same as addRepeaterItem
+      this.$forceUpdate()
+    }
+  },
 
     normalizeTime(val) {
       if (!val && val !== 0) return ''

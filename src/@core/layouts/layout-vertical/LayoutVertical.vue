@@ -113,9 +113,11 @@ export default {
     },
   filteredNavItems() {
     const role = this.$store.getters['auth/userRole']
-    // console.log('Current role:', role)
+    console.log('Current role:', role)
 
     function filterByRole(items) {
+      console.log("items")
+      console.log(items)
       return items
         .map(item => {
           // Recursively filter children
@@ -144,7 +146,7 @@ export default {
     }
 
     const filtered = filterByRole(require('@/navigation/vertical').default)
-    // console.log('Filtered nav items:', filtered)
+    console.log('Filtered nav items:', filtered)
     return filtered
   },
 

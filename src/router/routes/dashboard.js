@@ -28,6 +28,15 @@ export default [
       requiresAuth: true,
       roles: ['admin'],
     },
-    
+  },
+  {
+    path: '/employees/:employeeId',
+    name: 'employees-detail',
+    component: () => import('@/views/dashboard/employees/show.vue'),
+    meta: {
+      layout: 'content', // Vuexy’s main layout (with sidebar)
+      requiresAuth: true,
+      roles: ['admin'],
+    }
   }
 ]
