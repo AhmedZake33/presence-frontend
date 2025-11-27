@@ -1,3 +1,5 @@
+import { title } from "echarts/lib/theme/dark";
+
 export default [
   // {
   //   title: 'Attendance',
@@ -38,7 +40,19 @@ export default [
         icon: 'SettingsIcon',
         route: 'settings',
         meta: { role: ['admin'] },
-      }
+      },
+      {
+        title: 'Create Day Off',
+        icon: 'CalendarIcon',
+        route: 'create-day-off',
+        meta: { role: ['employee'] },
+      },
+      {
+        title: 'Day Off',
+        icon: 'CalendarIcon',
+        route: 'day-off-request',
+        meta: { role: ['admin'] },
+      },
       
 ]
 

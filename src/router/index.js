@@ -12,6 +12,7 @@ import chartsMaps from './routes/charts-maps'
 import formsTable from './routes/forms-tables'
 import others from './routes/others'
 import setting from './routes/setting'
+import dayOff from './routes/dayOff'
 
 Vue.use(VueRouter)
 
@@ -31,6 +32,7 @@ const router = new VueRouter({
     ...uiElements,
     ...others,
     ...setting,
+    ...dayOff,
     {
       path: '*',
       redirect: 'error-404',

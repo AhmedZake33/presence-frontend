@@ -1,31 +1,76 @@
 <template>
   <div>
-   <b-tabs v-model="tabIndex" content-class="mt-3">
-      <b-tab title="Attendance Setting" active>
-        <Attendance lazy />
-      </b-tab>
-      <b-tab title="Day Off Policy">
-        <DayOff  lazy />
-      </b-tab>
-      <!-- <b-tab title="Contact">
-        <ContactPage />
-      </b-tab>
-      <b-tab title="Services">
-        <ServicesPage />
-      </b-tab> -->
-    </b-tabs>
+    <b-row class="mb-2 align-items-center">
+      <b-col></b-col>
+      <b-col cols="4" class="text-right">
+        <b-button variant="primary" @click="reloadAll">Reload</b-button>
+      </b-col>
+    </b-row>
+    <b-row>
+      <!-- <b-col md="4">
+        <b-card>
+          <b-list-group flush>
+            <b-list-group-item
+              v-for="(value, key) in settingsList"
+              :key="key"
+              :active="selectedKey === key"
+              button
+              @click="selectKey(key)"
+            >
+              <div class="d-flex justify-content-between">
+                <div>
+                  <strong>{{ key }}</strong>
+                  <div class="small text-muted" v-if="brief(value)">{{ brief(value) }}</div>
+                </div>
+                <div class="text-right">
+                  <small class="text-muted">{{ lastUpdated(value) }}</small>
+                </div>
+              </div>
+            </b-list-group-item>
+          </b-list-group>
+
+         
+        
+        </b-card>
+      </b-col> -->
+
+      <b-col md="12">
+        <b-card v-if="selectedKey">
+          <dynamic-setting-form
+            :key-prop="selectedKey"
+            :initial-value="settingsList[selectedKey]"
+            @saved="onSaved"
+          />
+        </b-card>
+
+        <b-card v-else class="text-center text-muted">
+          Select a setting on the left to edit it.
+        </b-card>
+      </b-col>
+    </b-row>
+
+    <!-- Create new setting modal -->
+    <b-modal id="create-setting-modal" title="Create Setting" @ok="createNewSetting">
+      <b-form-group label="Key (unique)">
+        <b-form-input v-model="newKey" placeholder="e.g. attendance_rules"></b-form-input>
+      </b-form-group>
+
+      <b-form-group label="Initial value (JSON)">
+        <b-form-textarea v-model="newValueText" rows="6" placeholder='{"checkin_time":"09:00"}'></b-form-textarea>
+      </b-form-group>
+
+      <div v-if="createError" class="text-danger small">{{ createError }}</div>
+    </b-modal>
   </div>
 </template>
 
 <script>
-import Attendance from './attendanceSetting.vue';
-import DayOff from './dayOff.vue';
 import DynamicSettingForm from './DynamicSettingForm.vue'
 import { mapState } from 'vuex'
 
 export default {
   name: 'SettingsManager',
-  components: { DynamicSettingForm,Attendance,DayOff },
+  components: { DynamicSettingForm },
   data() {
     return {
       selectedKey: null,

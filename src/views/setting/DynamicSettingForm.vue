@@ -137,7 +137,7 @@ export default {
       local: {},
       jsonText: '',
       saving: false,
-      debug: true, // Set to false in production
+      debug: false, // Set to false in production
       schemaMap: {
         attendance_rules: {
           fields: [
