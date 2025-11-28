@@ -75,22 +75,14 @@ export default {
   methods: {
 
     onPageChange(page) {
-      this.$emit('page-changed', {
-        page: page,
-        perPage: this.perPage
-      })
-      this.load(page.page, this.perPage)
+      this.load(page, this.perPage)
     },
     
     onPerPageChange(perPage) {
       this.currentPage = 1
-      this.$emit('per-page-changed', {
-        page: this.currentPage,
-        perPage: perPage
-      })
       console.log("onPerPageChange")
       console.log(perPage)
-      this.load(perPage.page, perPage.perPage)
+      this.load(this.currentPage, perPage)
     },
     
     // Method to reset to first page (useful when filtering)
