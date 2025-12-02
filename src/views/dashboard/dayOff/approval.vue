@@ -1,5 +1,6 @@
 <template>
-  <div>    
+  <div>
+    <loading :visible="loading" text="Processing..." />
     <b-card>
       <b-card-header>
         <h4 class="mb-0">Leave Request Approvals</h4>
@@ -34,15 +35,10 @@
           </b-col>
         </b-row>
 
-        <div v-if="loading">
-          <LoadingSpinner :visible="loading" />
-        </div>
-
-        <base-table 
-          v-else
+        <BaseTable
           title="Leave Requests"
-          :items="leaveRequests" 
-          :fields="requestFields"
+          :items="leaveRequests"
+          :fields="fields"
           :paginated="true"
           :per-page="perPage"
           :total-rows="totalRows"
@@ -140,11 +136,10 @@
               </b-button>
             </b-button-group>
           </template>
-        </base-table>
+        </BaseTable>
       </b-card-body>
     </b-card>
 
-    <!-- All your modals remain the same -->
     <!-- Reason Modal -->
     <b-modal v-model="modals.reason" :title="`Reason - ${selectedRequest && selectedRequest.user ? selectedRequest.user.name : ''}`" ok-only>
       <p>{{ selectedRequest && selectedRequest.reason }}</p>
@@ -155,7 +150,83 @@
 
     <!-- Details Modal -->
     <b-modal v-model="modals.details" :title="`Request Details - ${selectedRequest && selectedRequest.user ? selectedRequest.user.name : ''}`" size="lg" ok-only>
-      <!-- Details modal content remains the same -->
+      <b-row>
+        <b-col md="6">
+          <b-card no-body class="mb-3">
+            <b-card-header class="bg-light">
+              <h6 class="mb-0">Request Information</h6>
+            </b-card-header>
+            <b-card-body>
+              <b-list-group flush>
+                <b-list-group-item>
+                  <strong>Employee:</strong> {{ selectedRequest && selectedRequest.user ? selectedRequest.user.name : '' }}
+                </b-list-group-item>
+                <b-list-group-item>
+                  <strong>Email:</strong> {{ selectedRequest && selectedRequest.user ? selectedRequest.user.email : '' }}
+                </b-list-group-item>
+                <b-list-group-item>
+                  <strong>Leave Type:</strong> 
+                  <b-badge :variant="getLeaveTypeVariant(selectedRequest && selectedRequest.type ? selectedRequest.type.name : '')" class="ml-2">
+                    {{ selectedRequest && selectedRequest.type ? selectedRequest.type.name : '' }}
+                  </b-badge>
+                </b-list-group-item>
+                <b-list-group-item>
+                  <strong>Period:</strong> {{ formatDate(selectedRequest && selectedRequest.from_date) }} to {{ formatDate(selectedRequest && selectedRequest.to_date) }}
+                </b-list-group-item>
+                <b-list-group-item>
+                  <strong>Duration:</strong> {{ selectedRequest && selectedRequest.total_days }} day(s)
+                  <span v-if="selectedRequest && selectedRequest.is_half_day">(Half Day - {{ selectedRequest.half_day_type }})</span>
+                </b-list-group-item>
+              </b-list-group>
+            </b-card-body>
+          </b-card>
+        </b-col>
+        
+        <b-col md="6">
+          <b-card no-body class="mb-3">
+            <b-card-header class="bg-light">
+              <h6 class="mb-0">Status & Approval</h6>
+            </b-card-header>
+            <b-card-body>
+              <b-list-group flush>
+                <b-list-group-item>
+                  <strong>Status:</strong> 
+                  <b-badge :variant="getStatusVariant(selectedRequest && selectedRequest.status)" class="ml-2">
+                    {{ selectedRequest && selectedRequest.status }}
+                  </b-badge>
+                </b-list-group-item>
+                <b-list-group-item v-if="selectedRequest && selectedRequest.approved_by">
+                  <strong>Approved By:</strong> {{ selectedRequest.approver ? selectedRequest.approver.name : '' }}
+                </b-list-group-item>
+                <b-list-group-item v-if="selectedRequest && selectedRequest.approved_at">
+                  <strong>Approved At:</strong> {{ formatDateTime(selectedRequest.approved_at) }}
+                </b-list-group-item>
+                <b-list-group-item v-if="selectedRequest && selectedRequest.approval_notes">
+                  <strong>Notes:</strong> {{ selectedRequest.approval_notes }}
+                </b-list-group-item>
+                <b-list-group-item>
+                  <strong>Submitted:</strong> {{ formatDateTime(selectedRequest && selectedRequest.created_at) }}
+                </b-list-group-item>
+              </b-list-group>
+            </b-card-body>
+          </b-card>
+        </b-col>
+      </b-row>
+
+      <b-card no-body>
+        <b-card-header class="bg-light">
+          <h6 class="mb-0">Reason & Details</h6>
+        </b-card-header>
+        <b-card-body>
+          <p><strong>Reason:</strong></p>
+          <p>{{ selectedRequest && selectedRequest.reason }}</p>
+          
+          <div v-if="selectedRequest && selectedRequest.emergency_contact">
+            <strong>Emergency Contact:</strong>
+            <p>{{ selectedRequest.emergency_contact }}</p>
+          </div>
+        </b-card-body>
+      </b-card>
     </b-modal>
 
     <!-- Reject Modal -->
@@ -181,15 +252,15 @@
 </template>
 
 <script>
-import api from "@/libs/axios";
-import LoadingSpinner from "@/views/components/my-components/loading.vue";
+import api from '@/libs/axios'
 import BaseTable from '@/views/components/my-components/table.vue'
+import loading from '@/views/components/my-components/loading.vue'
 
 export default {
-  name: 'AdminLeaveApproval',
-
-  components:{
-    LoadingSpinner,BaseTable
+  name: 'LeaveApprovalUsingBaseTable',
+  components: { 
+    BaseTable, 
+    loading 
   },
   data() {
     return {
@@ -214,7 +285,7 @@ export default {
         reject: false,
         revoke: false
       },
-      requestFields: [
+      fields: [
         { key: 'employee', label: 'Employee', sortable: true },
         { key: 'dates', label: 'Dates', sortable: true },
         { key: 'type', label: 'Leave Type', sortable: true },
@@ -222,87 +293,79 @@ export default {
         { key: 'reason', label: 'Reason' },
         { key: 'actions', label: 'Actions' }
       ]
-    };
-  },
-  mounted() {
-    this.loadRequests();
-    this.loadLeaveTypes();
+    }
   },
   methods: {
     onPageChange(page) {
-      console.log('Page changed to:', page);
-      this.loadRequests(page, this.perPage);
+      this.load(page, this.perPage)
     },
     
     onPerPageChange(perPage) {
-      console.log('Per page changed to:', perPage);
-      this.currentPage = 1;
-      this.perPage = perPage;
-      this.loadRequests(1, perPage);
+      this.currentPage = 1
+      this.load(this.currentPage, perPage)
     },
 
     // Reset to first page when filters change
     handleFilterChange() {
-      this.currentPage = 1;
-      this.loadRequests(1, this.perPage);
+      this.currentPage = 1
+      this.load(1, this.perPage)
     },
     
-    async loadRequests(page = 1, perPage = 10) {
-      this.loading = true;
+    async load(page = 1, perPage = 10) {
       try {
+        this.loading = true
         const params = {
           page: page,
           perPage: perPage,
           ...this.filters
-        };
+        }
 
-        console.log('Loading requests with params:', params);
+        console.log('Loading leave requests with params:', params)
 
-        // Make sure you're using the correct endpoint
-        const response = await api.get('/admin/day-off-requests', { params });
-        this.leaveRequests = response.data.data;
-        this.totalRows = response.data.total;
-        this.currentPage = response.data.current_page || page;
-        this.perPage = response.data.per_page || perPage;
+        const response = await api.get('/admin/day-off-requests', { params })
+        this.leaveRequests = response.data.data
+        this.totalRows = response.data.total
+        this.currentPage = response.data.current_page || page
+        this.perPage = response.data.per_page || perPage
+        
       } catch (error) {
-        console.error('Error loading leave requests:', error);
+        console.error('Error loading leave requests:', error)
         this.$bvToast.toast('Error loading leave requests', {
           variant: 'danger',
           solid: true
-        });
+        })
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     async loadLeaveTypes() {
       try {
-        const response = await api.get('/day-off-types/active');
-        this.leaveTypes = response.data.data;
+        const response = await api.get('/day-off-types/active')
+        this.leaveTypes = response.data.data
       } catch (error) {
-        console.error('Error loading leave types:', error);
+        console.error('Error loading leave types:', error)
       }
     },
 
-    // ... rest of your methods remain the same
     formatDate(date) {
-      if (!date) return '';
+      if (!date) return ''
       return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
-      });
+      })
     },
 
     formatDateTime(datetime) {
-      if (!datetime) return '';
+      if (!datetime) return ''
       return new Date(datetime).toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      });
+      })
     },
 
     getStatusVariant(status) {
@@ -311,59 +374,61 @@ export default {
         approved: 'success',
         rejected: 'danger',
         cancelled: 'secondary'
-      };
-      return variants[status] || 'secondary';
+      }
+      return variants[status] || 'secondary'
     },
 
     getLeaveTypeVariant(typeName) {
-      if (!typeName) return 'secondary';
+      if (!typeName) return 'secondary'
       const variants = {
         'Annual Leave': 'primary',
         'Sick Leave': 'info',
         'Personal Leave': 'success',
         'Emergency Leave': 'danger'
-      };
-      return variants[typeName] || 'secondary';
+      }
+      return variants[typeName] || 'secondary'
     },
 
     showReasonModal(request) {
-      this.selectedRequest = request;
-      this.modals.reason = true;
+      this.selectedRequest = request
+      this.modals.reason = true
     },
 
     showDetailsModal(request) {
-      this.selectedRequest = request;
-      this.modals.details = true;
+      this.selectedRequest = request
+      this.modals.details = true
     },
 
     showRejectModal(request) {
-      this.selectedRequest = request;
-      this.rejectForm.reason = '';
-      this.modals.reject = true;
+      this.selectedRequest = request
+      this.rejectForm.reason = ''
+      this.modals.reject = true
     },
 
     showRevokeModal(request) {
-      this.selectedRequest = request;
-      this.modals.revoke = true;
+      this.selectedRequest = request
+      this.modals.revoke = true
     },
 
     async approveRequest(request) {
       try {
-        await api.patch(`/admin/day-off-requests/${request.id}/approve`);
+        this.loading = true
+        await api.patch(`/admin/day-off-requests/${request.id}/approve`)
         
         this.$bvToast.toast(`Leave request approved for ${request.user.name}`, {
           variant: 'success',
           solid: true
-        });
+        })
         
-        this.loadRequests(this.currentPage, this.perPage);
+        this.load(this.currentPage, this.perPage)
       } catch (error) {
-        const message = error.response?.data?.message || 'Error approving request';
+        const message = error.response?.data?.message || 'Error approving request'
         this.$bvToast.toast(message, {
           variant: 'danger',
           solid: true
-        });
+        })
       }
+      this.loading = false
     },
 
     async rejectRequest() {
@@ -371,56 +436,64 @@ export default {
         this.$bvToast.toast('Please provide a rejection reason', {
           variant: 'warning',
           solid: true
-        });
-        return;
+        })
+        return
       }
 
       try {
+        this.loading = true
+
         await api.patch(`/admin/day-off-requests/${this.selectedRequest.id}/reject`, {
           reason: this.rejectForm.reason
-        });
+        })
         
         this.$bvToast.toast(`Leave request rejected for ${this.selectedRequest.user.name}`, {
           variant: 'success',
           solid: true
-        });
+        })
         
-        this.modals.reject = false;
-        this.loadRequests(this.currentPage, this.perPage);
+        this.modals.reject = false
+        this.load(this.currentPage, this.perPage)
       } catch (error) {
-        const message = error.response?.data?.message || 'Error rejecting request';
+        const message = error.response?.data?.message || 'Error rejecting request'
         this.$bvToast.toast(message, {
           variant: 'danger',
           solid: true
-        });
+        })
       }
+      this.loading = false
+
     },
 
     async revokeRequest() {
       try {
-        await api.patch(`/admin/day-off-requests/${this.selectedRequest.id}/revoke`);
+        await api.patch(`/admin/day-off-requests/${this.selectedRequest.id}/revoke`)
         
         this.$bvToast.toast(`Approval revoked for ${this.selectedRequest.user.name}`, {
           variant: 'success',
           solid: true
-        });
+        })
         
-        this.modals.revoke = false;
-        this.loadRequests(this.currentPage, this.perPage);
+        this.modals.revoke = false
+        this.load(this.currentPage, this.perPage)
       } catch (error) {
-        const message = error.response?.data?.message || 'Error revoking approval';
+        const message = error.response?.data?.message || 'Error revoking approval'
         this.$bvToast.toast(message, {
           variant: 'danger',
           solid: true
-        });
+        })
       }
     },
 
     resetRejectForm() {
-      this.rejectForm.reason = '';
+      this.rejectForm.reason = ''
     }
+  },
+  created() { 
+    this.load()
+    this.loadLeaveTypes()
   }
-};
+}
 </script>
 
 <style scoped>

@@ -21,6 +21,12 @@ export default [
       {
         title: 'Dashboard',
         icon: 'HomeIcon',
+        route: 'employee-dashboard',
+        meta: { role: ['employee'] },
+      },
+      {
+        title: 'Dashboard',
+        icon: 'HomeIcon',
         route: 'attendance-dashboard',
         meta: { role: ['admin'] },
       },
@@ -36,23 +42,24 @@ export default [
         route: 'attendance', 
       },
       {
-        title: 'settings',
-        icon: 'SettingsIcon',
-        route: 'settings',
-        meta: { role: ['admin'] },
-      },
-      {
         title: 'Create Day Off',
         icon: 'CalendarIcon',
         route: 'create-day-off',
         meta: { role: ['employee'] },
       },
       {
-        title: 'Day Off',
+        title: 'Day Off Requests',
         icon: 'CalendarIcon',
-        route: 'day-off-request',
+        route: 'day-off-requests',
         meta: { role: ['admin'] },
       },
+      {
+        title: 'settings',
+        icon: 'SettingsIcon',
+        route: 'settings',
+        meta: { role: ['admin'] },
+      },
+      
       
 ]
 

@@ -10,8 +10,8 @@ export default [
     }
   },
   {
-    path: '/day-off-request',
-    name: 'day-off-request',
+    path: '/day-off-requests',
+    name: 'day-off-requests',
     component: () => import('@/views/dashboard/dayOff/approval.vue'),
     meta: {
       layout: 'content',

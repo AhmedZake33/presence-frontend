@@ -111,28 +111,35 @@
         <h5>My Leave Requests</h5>
       </b-card-header>
       <b-card-body>
-        <b-table 
-          :items="myRequests" 
+        <BaseTable
+          title=""
+          :items="myRequests"
           :fields="requestFields"
-          striped
-          hover
-          show-empty
-          empty-text="No leave requests found"
+          :paginated="true"
+          :per-page="perPage"
+          :total-rows="totalRows"
+          :current-page="currentPage"
+          @page-changed="onPageChange"
+          @per-page-changed="onPerPageChange"
         >
           <template #cell(from_date)="data">
             {{ formatDate(data.value) }}
           </template>
+          
           <template #cell(to_date)="data">
             {{ formatDate(data.value) }}
           </template>
+          
           <template #cell(status)="data">
             <b-badge :variant="getStatusVariant(data.value)">
               {{ data.value }}
             </b-badge>
           </template>
+          
           <template #cell(total_days)="data">
             {{ data.item.is_half_day ? '0.5' : data.value }}
           </template>
+          
           <template #cell(actions)="data">
             <b-button 
               size="sm" 
@@ -154,7 +161,7 @@
             </b-button>
             <span v-else class="text-muted">-</span>
           </template>
-        </b-table>
+        </BaseTable>
       </b-card-body>
     </b-card>
 
@@ -265,9 +272,13 @@
 
 <script>
 import api from "@/libs/axios";
+import BaseTable from '@/views/components/my-components/table.vue'
 
 export default {
   name: 'EmployeeLeaveRequest',
+  components: {
+    BaseTable
+  },
   data() {
     return {
       requestForm: {
@@ -293,6 +304,12 @@ export default {
         { value: 'first_half', text: 'First Half' },
         { value: 'second_half', text: 'Second Half' }
       ],
+      
+      // Pagination
+      currentPage: 1,
+      perPage: 10,
+      totalRows: 0,
+      
       requestFields: [
         { key: 'type.name', label: 'Type' },
         { key: 'from_date', label: 'From' },
@@ -364,20 +381,55 @@ export default {
     this.loadData();
   },
   methods: {
+    // Pagination methods
+    onPageChange(page) {
+      this.currentPage = page;
+      this.loadMyRequests(page, this.perPage);
+    },
+    
+    onPerPageChange(perPage) {
+      this.currentPage = 1;
+      this.perPage = perPage;
+      this.loadMyRequests(1, perPage);
+    },
+
     async loadData() {
       try {
-        const [typesResponse, requestsResponse, allocationsResponse] = await Promise.all([
+        const [typesResponse, allocationsResponse] = await Promise.all([
           api.get('/day-off-types/active'),
-          api.get('/day-off-requests'),
           api.get('/leave-balances')
         ]);
         
         this.leaveTypes = typesResponse.data.data;
-        this.myRequests = requestsResponse.data.data;
         this.allocations = allocationsResponse.data.data;
+        
+        // Load requests after types and allocations
+        this.loadMyRequests(this.currentPage, this.perPage);
       } catch (error) {
         console.error('Error loading data:', error);
         this.$bvToast.toast('Error loading data', {
+          variant: 'danger',
+          solid: true
+        });
+      }
+    },
+
+    async loadMyRequests(page = 1, perPage = 10) {
+      try {
+        const params = {
+          page: page,
+          perPage: perPage,
+          user_id: this.auth().id
+        };
+
+        const response = await api.get('/day-off-requests', { params });
+        this.myRequests = response.data.data;
+        this.totalRows = response.data.total;
+        this.currentPage = response.data.current_page || page;
+        this.perPage = response.data.per_page || perPage;
+      } catch (error) {
+        console.error('Error loading my requests:', error);
+        this.$bvToast.toast('Error loading leave requests', {
           variant: 'danger',
           solid: true
         });
@@ -449,7 +501,7 @@ export default {
         });
         
         this.resetForm();
-        this.loadData();
+        this.loadMyRequests(this.currentPage, this.perPage);
       } catch (error) {
         const message = error.response?.data?.message || 'Error submitting request';
         this.$bvToast.toast(message, {
@@ -492,7 +544,7 @@ export default {
           solid: true
         });
         
-        this.loadData();
+        this.loadMyRequests(this.currentPage, this.perPage);
       } catch (error) {
         const message = error.response?.data?.message || 'Error deleting request';
         this.$bvToast.toast(message, {

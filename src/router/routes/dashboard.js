@@ -1,5 +1,15 @@
 export default [
   {
+    path: '/employee-dashboard',
+    name: 'employee-dashboard',
+    component: () => import('@/views/dashboard/employees/dashboard.vue'),
+    meta: {
+      layout: 'content', // Vuexy’s main layout (with sidebar)
+      requiresAuth: true,
+      roles: ['employee'],
+    },
+  },
+  {
     path: '/dashboard',
     name: 'attendance-dashboard',
     component: () => import('@/views/dashboard/attendance/dashboard.vue'),

@@ -2,7 +2,7 @@ import Vue from 'vue'
 import { ToastPlugin, ModalPlugin } from 'bootstrap-vue'
 import VueCompositionAPI from '@vue/composition-api'
 
-// Bootstrap & BootstrapVue CSS
+// CSS
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
@@ -16,7 +16,7 @@ import router from './router'
 import store from './store'
 import App from './App.vue'
 
-// Global Components
+// Global components
 import './global-components'
 
 // 3rd party plugins
@@ -29,24 +29,23 @@ import '@/libs/sweet-alerts'
 import '@/libs/vue-select'
 import '@/libs/tour'
 
-// Axios Mock Adapter
+// Mock DB
 import '@/@fake-db/db'
 
-// BSV Plugin Registration
+// ⬇️ GLOBAL MIXIN
+import mixinGlobal from './mixins/mixins'
+Vue.mixin(mixinGlobal)
+
+// BSV plugins
 Vue.use(ToastPlugin)
 Vue.use(ModalPlugin)
 
-// Composition API
+// Composition API (Vue 2)
 Vue.use(VueCompositionAPI)
 
-// Feather font icon - For form-wizard
-// * Shall remove it if not using font-icons of feather-icons - For form-wizard
-require('@core/assets/fonts/feather/iconfont.css') // For form-wizard
-
-// import core styles
+// Fonts & styles
+require('@core/assets/fonts/feather/iconfont.css')
 require('@core/scss/core.scss')
-
-// import assets styles
 require('@/assets/scss/style.scss')
 
 Vue.config.productionTip = false
