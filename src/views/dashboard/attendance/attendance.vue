@@ -6,8 +6,8 @@
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <h5 class="mb-0">Check In</h5>
-          <small class="text-muted">
-            Scheduled: <strong>{{ scheduledCheckIn || '-' }}</strong>
+          <small class="text-muted" v-if="!canData || !canData.allow_any_time">
+            <span v-if="scheduledCheckIn">Scheduled: <strong>{{ scheduledCheckIn || '-' }}</strong></span>
             <span v-if="canClockMessage"> — {{ canClockMessage }}</span>
           </small>
         </div>
@@ -34,8 +34,8 @@
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <h5 class="mb-0">Check Out</h5>
-          <small class="text-muted">
-            Scheduled: <strong>{{ scheduledCheckOut || '-' }}</strong>
+          <small class="text-muted" v-if="!canData || !canData.allow_any_time">
+            <span v-if="scheduledCheckOut">Scheduled: <strong>{{ scheduledCheckOut || '-' }}</strong></span>
           </small>
         </div>
         <div>

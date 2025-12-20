@@ -59,7 +59,58 @@
 
           <!-- Default simple field -->
           <div v-else>
-            <b-form-group :label="field.label" :label-for="field.key">
+            <!-- Field: allow_any_time -->
+            <b-form-group v-if="field.key === 'allow_any_time'" :label="field.label" :label-for="field.key">
+              <b-form-checkbox
+                v-model="local[field.key]"
+                :id="field.key"
+                @change="onAllowAnyTimeChange"
+                switch
+              >
+                {{ local[field.key] ? 'Enabled' : 'Disabled' }}
+              </b-form-checkbox>
+              <small class="text-muted">
+                When enabled, employees can check in and out at any time regardless of fixed schedules
+              </small>
+            </b-form-group>
+            
+            <!-- Field: working_days (always shown) -->
+            <b-form-group v-else-if="field.key === 'working_days'" :label="field.label" :label-for="field.key">
+              <b-form-checkbox-group
+                v-model="local[field.key]"
+                :id="field.key"
+                :options="dayOptions"
+                stacked
+              />
+              <small class="text-muted">
+                Select days when attendance rules apply
+              </small>
+            </b-form-group>
+            
+            <!-- Time-related fields (conditionally shown) -->
+            <b-form-group 
+              v-else-if="isTimeRelatedField(field.key) && !local.allow_any_time" 
+              :label="field.label" 
+              :label-for="field.key"
+            >
+              <component
+                :is="fieldComponent(field.type)"
+                v-model="local[field.key]"
+                :id="field.key"
+                v-bind="field.props || {}"
+                :type="field.type === 'number' ? 'number' : 'text'"
+              />
+              <!-- Helper text for specific fields -->
+              <small v-if="field.key === 'late_threshold_minutes'" class="text-muted">
+                Minutes after check-in time when employee is marked as late
+              </small>
+              <small v-if="field.key === 'early_checkout_allowed'" class="text-muted">
+                Allow employees to check out before the scheduled check-out time
+              </small>
+            </b-form-group>
+            
+            <!-- Other fields -->
+            <b-form-group v-else-if="!isTimeRelatedField(field.key)" :label="field.label" :label-for="field.key">
               <component
                 :is="fieldComponent(field.type)"
                 v-model="local[field.key]"
@@ -98,6 +149,8 @@
     <div v-if="debug" class="mt-4 p-3 bg-light border rounded">
       <h6>Debug Data:</h6>
       <pre>{{ JSON.stringify(local, null, 2) }}</pre>
+      <p>Allow Any Time: {{ local.allow_any_time }}</p>
+      <p>Show time fields: {{ !local.allow_any_time }}</p>
     </div>
   </div>
 </template>
@@ -137,18 +190,26 @@ export default {
       local: {},
       jsonText: '',
       saving: false,
-      debug: false, // Set to false in production
+      debug: false,
+      dayOptions: [
+        { text: 'Monday', value: 'mon' },
+        { text: 'Tuesday', value: 'tue' },
+        { text: 'Wednesday', value: 'wed' },
+        { text: 'Thursday', value: 'thu' },
+        { text: 'Friday', value: 'fri' },
+        { text: 'Saturday', value: 'sat' },
+        { text: 'Sunday', value: 'sun' }
+      ],
+      timeRelatedFields: ['checkin_time', 'checkout_time', 'late_threshold_minutes', 'early_checkout_allowed'],
       schemaMap: {
         attendance_rules: {
           fields: [
+            { key: 'allow_any_time', label: 'Allow any time', type: 'checkbox' },
             { key: 'checkin_time', label: 'Check-in time', type: 'time' },
             { key: 'checkout_time', label: 'Check-out time', type: 'time' },
             { key: 'late_threshold_minutes', label: 'Late threshold (minutes)', type: 'number', props: { min: 0 } },
             { key: 'early_checkout_allowed', label: 'Allow early checkout?', type: 'checkbox' },
-            { key: 'working_days', label: 'Working days', type: 'checkbox-group', props: { options: [
-                { text: 'Mon', value: 'mon' }, { text: 'Tue', value: 'tue' }, { text: 'Wed', value: 'wed' },
-                { text: 'Thu', value: 'thu' }, { text: 'Fri', value: 'fri' }, { text: 'Sat', value: 'sat' }, { text: 'Sun', value: 'sun' }
-              ] } }
+            { key: 'working_days', label: 'Working days', type: 'checkbox-group' }
           ]
         },
         presence_rules: {
@@ -164,20 +225,9 @@ export default {
                 { key: 'id', label: 'Type ID', type: 'text', required: true },
                 { key: 'label', label: 'Type Name', type: 'text', required: true },
                 { key: 'days_per_year', label: 'Days per Year', type: 'number', props: { min: 0 } },
-                // { key: 'carry_over_allowed', label: 'Carry Over Allowed', type: 'checkbox' },
-                // { key: 'max_carry_over_days', label: 'Max Carry Over Days', type: 'number', props: { min: 0 } },
                 { key: 'requires_approval', label: 'Requires Approval', type: 'checkbox' }
               ]
-            },
-            // {
-            //   key: 'global_rules',
-            //   label: 'Global Rules',
-            //   type: 'group',
-            //   fields: [
-            //     { key: 'allow_unpaid_days', label: 'Allow Unpaid Days', type: 'checkbox' },
-            //     { key: 'notice_days_required', label: 'Notice Days Required', type: 'number', props: { min: 0 } }
-            //   ]
-            // }
+            }
           ]
         }
       }
@@ -207,6 +257,30 @@ export default {
       return map[type] || 'b-form-input'
     },
 
+    isTimeRelatedField(fieldKey) {
+      return this.timeRelatedFields.includes(fieldKey)
+    },
+
+    onAllowAnyTimeChange(value) {
+      console.log('Allow any time changed to:', value)
+      // Force Vue to re-render by updating a reactive property
+      this.local = { ...this.local, allow_any_time: value }
+      
+      // If switching to "allow any time", we can optionally clear time fields
+      if (value === true) {
+        // Optional: Clear time fields when allowing any time
+        this.timeRelatedFields.forEach(field => {
+          if (field === 'late_threshold_minutes') {
+            this.local[field] = 0
+          } else if (field === 'early_checkout_allowed') {
+            this.local[field] = false
+          } else {
+            this.local[field] = ''
+          }
+        })
+      }
+    },
+
     resetLocal() {
       if (!this.schema) {
         try {
@@ -221,13 +295,14 @@ export default {
         ? JSON.parse(JSON.stringify(this.initialValue)) 
         : {}
       
-      this.local = {}
+      // Initialize local with default structure
+      const newLocal = {}
 
       this.schema.fields.forEach(f => {
         if (f.type === 'repeater') {
           // Handle repeater fields
           if (Array.isArray(base[f.key])) {
-            this.local[f.key] = base[f.key].map(item => {
+            newLocal[f.key] = base[f.key].map(item => {
               const normalized = {}
               f.itemFields.forEach(sf => {
                 const value = item?.[sf.key]
@@ -236,21 +311,34 @@ export default {
               return normalized
             })
           } else {
-            this.local[f.key] = []
+            newLocal[f.key] = []
           }
         } else if (f.type === 'group') {
           // Handle group fields
-          this.local[f.key] = {}
+          newLocal[f.key] = {}
           f.fields.forEach(sf => {
             const value = base?.[f.key]?.[sf.key]
-            this.local[f.key][sf.key] = this.getDefaultValue(sf.type, value)
+            newLocal[f.key][sf.key] = this.getDefaultValue(sf.type, value)
           })
         } else {
           // Handle simple fields
           const value = base[f.key]
-          this.local[f.key] = this.getDefaultValue(f.type, value)
+          newLocal[f.key] = this.getDefaultValue(f.type, value)
         }
       })
+      
+      // Ensure allow_any_time has a default value
+      if (newLocal.allow_any_time === undefined) {
+        newLocal.allow_any_time = false
+      }
+      
+      // Ensure working_days has a default value
+      if (!newLocal.working_days || !Array.isArray(newLocal.working_days)) {
+        newLocal.working_days = ['mon', 'tue', 'wed', 'thu', 'fri']
+      }
+      
+      // Update local reactively
+      this.local = newLocal
     },
 
     getDefaultValue(type, value) {
@@ -275,7 +363,7 @@ export default {
       console.log('Adding repeater item:', key, itemFields)
       
       if (!Array.isArray(this.local[key])) {
-        this.local[key] = []
+        this.$set(this.local, key, [])
       }
       
       const newItem = {}
@@ -284,18 +372,15 @@ export default {
       })
       
       this.local[key].push(newItem)
-      
-      // Force Vue to update
-      this.$forceUpdate()
     },
-  removeRepeaterItem(key, index) {
-    if (Array.isArray(this.local[key]) && this.local[key].length > index) {
-      this.local[key].splice(index, 1)
-      
-      // Force Vue to update, same as addRepeaterItem
-      this.$forceUpdate()
-    }
-  },
+
+    removeRepeaterItem(key, index) {
+      if (Array.isArray(this.local[key]) && this.local[key].length > index) {
+        this.local[key].splice(index, 1)
+        // Force reactivity
+        this.$set(this.local, key, [...this.local[key]])
+      }
+    },
 
     normalizeTime(val) {
       if (!val && val !== 0) return ''
@@ -316,10 +401,15 @@ export default {
       this.saving = true
       try {
         const payload = JSON.parse(JSON.stringify(this.local))
-
+        
         // Normalize time fields if they exist
         if (payload.checkin_time) payload.checkin_time = this.normalizeTime(payload.checkin_time)
         if (payload.checkout_time) payload.checkout_time = this.normalizeTime(payload.checkout_time)
+        
+        // Ensure allow_any_time is boolean
+        if (payload.allow_any_time !== undefined) {
+          payload.allow_any_time = !!payload.allow_any_time
+        }
 
         await this.$store.dispatch('settings/update', { key: this.keyProp, payload })
         this.$bvToast.toast('Settings saved successfully', { variant: 'success', solid: true })
@@ -336,6 +426,7 @@ export default {
       this.saving = true
       try {
         const payload = JSON.parse(this.jsonText)
+        console.log('Saving JSON payload for key', this.keyProp, payload)
         await this.$store.dispatch('settings/update', { key: this.keyProp, payload })
         this.$bvToast.toast('Settings saved successfully', { variant: 'success', solid: true })
         this.$emit('saved', { key: this.keyProp })
@@ -350,6 +441,7 @@ export default {
       console.log('Current local data:', this.local)
       console.log('Initial value:', this.initialValue)
       console.log('Schema:', this.schema)
+      this.debug = !this.debug
     }
   }
 }

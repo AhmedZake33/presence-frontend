@@ -1,7 +1,6 @@
 <template>
   <div>
     <loading :visible="loading" text="Loading..." />
-    
     <b-card>
       <b-card-header>
         <b-row class="align-items-center">
@@ -88,18 +87,7 @@
           <b-card-body>
             <b-form @submit.prevent="saveGlobalSettings">
               <b-row>
-                <b-col md="6">
-                  <b-form-group label="Work Week Days" label-for="workweek_days">
-                    <b-form-checkbox-group
-                      id="workweek_days"
-                      v-model="globalSettings.workweek_days"
-                      :options="weekDays"
-                      stacked
-                    />
-                  </b-form-group>
-                </b-col>
-                
-                <b-col md="6">
+                <b-col md="12">
                   <b-form-group 
                     label="Maximum Consecutive Days" 
                     label-for="max_consecutive_days"
@@ -146,97 +134,97 @@
 
         <!-- Blackout Periods Section -->
         <b-card no-body>
-      <b-card-header class="bg-light">
-        <h5 class="mb-0">Blackout Periods</h5>
-      </b-card-header>
-      <b-card-body>
-        <b-table 
-          :items="blackoutPeriods" 
-          :fields="blackoutFields"
-          striped
-          hover
-          show-empty
-          empty-text="No blackout periods configured"
-        >
-          <template #cell(from_date)="data">
-            {{ formatDate(data.value) }}
-          </template>
-          
-          <template #cell(to_date)="data">
-            {{ formatDate(data.value) }}
-          </template>
-          
-          <template #cell(status)="data">
-            <b-badge :variant="data.value ? 'success' : 'secondary'">
-              {{ data.value ? 'Active' : 'Inactive' }}
-            </b-badge>
-          </template>
+          <b-card-header class="bg-light">
+            <h5 class="mb-0">Blackout Periods</h5>
+          </b-card-header>
+          <b-card-body>
+            <b-table 
+              :items="blackoutPeriods" 
+              :fields="blackoutFields"
+              striped
+              hover
+              show-empty
+              empty-text="No blackout periods configured"
+            >
+              <template #cell(from_date)="data">
+                {{ formatDate(data.value) }}
+              </template>
+              
+              <template #cell(to_date)="data">
+                {{ formatDate(data.value) }}
+              </template>
+              
+              <template #cell(status)="data">
+                <b-badge :variant="data.value ? 'success' : 'secondary'">
+                  {{ data.value ? 'Active' : 'Inactive' }}
+                </b-badge>
+              </template>
 
-          <template #cell(actions)="data">
-            <b-button-group size="sm">
-              <b-button 
-                variant="outline-warning"
-                @click="toggleBlackoutStatus(data.item)"
-                v-b-tooltip.hover :title="data.item.is_active ? 'Deactivate' : 'Activate'"
-              >
-                <feather-icon :icon="data.item.is_active ? 'XIcon' : 'CheckIcon'" />
-              </b-button>
-              <b-button 
-                variant="outline-danger"
-                @click="confirmDeleteBlackout(data.item)"
-                v-b-tooltip.hover title="Delete"
-              >
-                <feather-icon icon="TrashIcon" />
-              </b-button>
-            </b-button-group>
-          </template>
-        </b-table>
+              <template #cell(actions)="data">
+                <b-button-group size="sm">
+                  <b-button 
+                    variant="outline-warning"
+                    @click="toggleBlackoutStatus(data.item)"
+                    v-b-tooltip.hover :title="data.item.is_active ? 'Deactivate' : 'Activate'"
+                  >
+                    <feather-icon :icon="data.item.is_active ? 'XIcon' : 'CheckIcon'" />
+                  </b-button>
+                  <b-button 
+                    variant="outline-danger"
+                    @click="confirmDeleteBlackout(data.item)"
+                    v-b-tooltip.hover title="Delete"
+                  >
+                    <feather-icon icon="TrashIcon" />
+                  </b-button>
+                </b-button-group>
+              </template>
+            </b-table>
 
-        <b-form @submit.prevent="addBlackoutPeriod" class="mt-3">
-          <b-row>
-            <b-col md="3">
-              <b-form-group label="Name">
-                <b-form-input
-                  v-model="newBlackout.name"
-                  placeholder="e.g., Year-end Closing"
-                  required
-                />
-              </b-form-group>
-            </b-col>
-            <b-col md="3">
-              <b-form-group label="From Date">
-                <b-form-datepicker
-                  v-model="newBlackout.from_date"
-                  required
-                />
-              </b-form-group>
-            </b-col>
-            <b-col md="3">
-              <b-form-group label="To Date">
-                <b-form-datepicker
-                  v-model="newBlackout.to_date"
-                  required
-                />
-              </b-form-group>
-            </b-col>
-            <b-col md="2">
-              <b-form-group label="Reason">
-                <b-form-input
-                  v-model="newBlackout.reason"
-                  placeholder="e.g., Annual financial closing"
-                  required
-                />
-              </b-form-group>
-            </b-col>
-            <b-col md="1" class="d-flex align-items-end">
-              <b-button type="submit" variant="success" class="mb-3">
-                <feather-icon icon="PlusIcon" />
-              </b-button>
-            </b-col>
-          </b-row>
-        </b-form>
-      </b-card-body>
-    </b-card>
+            <b-form @submit.prevent="addBlackoutPeriod" class="mt-3">
+              <b-row>
+                <b-col md="3">
+                  <b-form-group label="Name">
+                    <b-form-input
+                      v-model="newBlackout.name"
+                      placeholder="e.g., Year-end Closing"
+                      required
+                    />
+                  </b-form-group>
+                </b-col>
+                <b-col md="3">
+                  <b-form-group label="From Date">
+                    <b-form-datepicker
+                      v-model="newBlackout.from_date"
+                      required
+                    />
+                  </b-form-group>
+                </b-col>
+                <b-col md="3">
+                  <b-form-group label="To Date">
+                    <b-form-datepicker
+                      v-model="newBlackout.to_date"
+                      required
+                    />
+                  </b-form-group>
+                </b-col>
+                <b-col md="2">
+                  <b-form-group label="Reason">
+                    <b-form-input
+                      v-model="newBlackout.reason"
+                      placeholder="e.g., Annual financial closing"
+                      required
+                    />
+                  </b-form-group>
+                </b-col>
+                <b-col md="1" class="d-flex align-items-end">
+                  <b-button type="submit" variant="success" class="mb-3">
+                    <feather-icon icon="PlusIcon" />
+                  </b-button>
+                </b-col>
+              </b-row>
+            </b-form>
+          </b-card-body>
+        </b-card>
       </b-card-body>
     </b-card>
 
@@ -364,7 +352,6 @@ export default {
       editingType: null,
       leaveTypes: [],
       globalSettings: {
-        workweek_days: ['mon', 'tue', 'wed', 'thu', 'fri'],
         max_consecutive_days: 30,
         allow_overallocation: false,
         auto_approve_for_manager: true
@@ -400,15 +387,6 @@ export default {
         { key: 'to_date', label: 'To Date', sortable: true },
         { key: 'reason', label: 'Reason', sortable: true },
         { key: 'actions', label: 'Actions' }
-      ],
-      weekDays: [
-        { text: 'Monday', value: 'mon' },
-        { text: 'Tuesday', value: 'tue' },
-        { text: 'Wednesday', value: 'wed' },
-        { text: 'Thursday', value: 'thu' },
-        { text: 'Friday', value: 'fri' },
-        { text: 'Saturday', value: 'sat' },
-        { text: 'Sunday', value: 'sun' }
       ]
     }
   },

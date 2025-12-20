@@ -3,15 +3,22 @@
     <loading :visible="load" text="Processing..." />
 
     <b-row>
-      <b-col md="6">
-        <b-card style="height: 150px;">
+      <b-col md="12">
+        <b-row>
+          <b-col md="6">
+          <b-card style="height: 150px;">
           <h4 style="margin-top: 50px;">Total Employees: {{ summary.totalEmployees }}</h4>
-        </b-card>
-        <b-card style="height: 150px;">
-          <h4 style="margin-top: 50px;">Present Today: {{ summary.presentToday }}</h4>
-        </b-card>
+          </b-card>
+          </b-col>
+          <b-col md="6">
+          <b-card style="height: 150px;">
+            <h4 style="margin-top: 50px;">Present Today: {{ summary.presentToday }}</h4>
+          </b-card>
+          </b-col>
+        </b-row>
+        
       </b-col>
-      <b-col md="6">
+      <b-col md="12">
         <b-card title="Attendance Stats">
           <line-chart :data="chartData" :options="chartOptions"  style="height:300px;"  />
         </b-card>
