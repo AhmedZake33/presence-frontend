@@ -466,9 +466,9 @@ export default {
       statisticsFields: [
         { key: 'name', label: 'Name', sortable: true },
         { key: 'attendance_rate', label: 'Rate %', sortable: true },
-        // { key: 'present_days', label: 'Present', sortable: true },
+        { key: 'present_days', label: 'Present', sortable: true },
         // { key: 'late_days', label: 'Late', sortable: true },
-        // { key: 'absent_days', label: 'Absent', sortable: true },
+        { key: 'absent_days', label: 'Absent', sortable: true },
         { key: 'avg_working_hours', label: 'Avg Hours', sortable: true }
       ],
       dailyFields: [
