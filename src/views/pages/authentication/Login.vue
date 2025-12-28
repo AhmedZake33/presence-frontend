@@ -292,7 +292,8 @@ export default {
     // save token + user
     localStorage.setItem("token", res.data.token);
     localStorage.setItem("user", JSON.stringify(res.data.user));
-    this.$router.replace(getHomeRouteForLoggedInUser(res.data.user.type.name))
+    this.$router.replace({name : "welcome"});
+    // this.$router.replace(getHomeRouteForLoggedInUser(res.data.user.type.name))
 
 
   } catch (err) {

@@ -104,7 +104,6 @@
                 v-if="data.item.status === 'pending'"
                 variant="success" 
                 @click="approveRequest(data.item)"
-                v-b-tooltip.hover title="Approve Request"
               >
                 <feather-icon icon="CheckIcon" />
               </b-button>
@@ -113,7 +112,6 @@
                 v-if="data.item.status === 'pending'"
                 variant="danger" 
                 @click="showRejectModal(data.item)"
-                v-b-tooltip.hover title="Reject Request"
               >
                 <feather-icon icon="XIcon" />
               </b-button>
@@ -122,7 +120,6 @@
                 v-if="data.item.status === 'approved'"
                 variant="warning" 
                 @click="showRevokeModal(data.item)"
-                v-b-tooltip.hover title="Revoke Approval"
               >
                 <feather-icon icon="RotateCcwIcon" />
               </b-button>
@@ -130,7 +127,6 @@
               <b-button 
                 variant="info" 
                 @click="showDetailsModal(data.item)"
-                v-b-tooltip.hover title="View Details"
               >
                 <feather-icon icon="EyeIcon" />
               </b-button>

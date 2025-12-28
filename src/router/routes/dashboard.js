@@ -36,7 +36,7 @@ export default [
     meta: {
       layout: 'content', // Vuexy’s main layout (with sidebar)
       requiresAuth: true,
-      roles: ['admin'],
+      roles: ['admin','manager'],
     },
   },
   {

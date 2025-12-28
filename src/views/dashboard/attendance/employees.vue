@@ -5,7 +5,7 @@
     <!-- Header with Toggle and Add User Button -->
     <b-card class="mb-4">
       <div class="d-flex justify-content-between align-items-center">
-        <h4 class="mb-0">Attendance Dashboard</h4>
+        <h4 class="mb-0">Employees Dashboard</h4>
         <div>
           <b-button 
             @click="showModal = true" 
@@ -87,6 +87,7 @@
             <option :value="null" disabled>Select user type</option>
             <option value="1">Admin</option>
             <option value="2">Employee</option>
+            <option value="3">Manager</option>
           </b-form-select>
         </b-form-group>
 
@@ -784,7 +785,7 @@ export default {
     
     formatDate(dateString) {
       if (!dateString) return '';
-      return dayjs(dateString).format('DD/MM/YY');
+      return dayjs(dateString).format('DD/MM/YYYY');
     },
     
     getStatusVariant(status) {

@@ -14,6 +14,7 @@
                   v-model="requestForm.day_off_type_id"
                   required
                   :options="leaveTypeOptions"
+                  @change="onLeaveTypeChange"
                 />
               </b-form-group>
             </b-col>
@@ -22,6 +23,9 @@
                 <small class="text-muted" v-if="selectedLeaveType">
                   Remaining: {{ remainingDays }} days
                 </small>
+                <div v-if="selectedLeaveType && selectedLeaveType.working_days" class="text-muted small">
+                  <strong>Working Days:</strong> {{ formattedWorkingDays }}
+                </div>
               </div>
             </b-col>
           </b-row>
@@ -87,8 +91,9 @@
           <div v-if="calculatedDays > 0" class="mb-3">
             <b-alert variant="info" show>
               <strong>Request Summary:</strong><br>
-              • Duration: {{ calculatedDays }} day(s)<br>
+              • Duration: {{ calculatedDays }} working day(s)<br>
               • Type: {{ selectedLeaveTypeName }}<br>
+              • Working Days: {{ formattedWorkingDays }}<br>
               • Status: Will be {{ requiresApproval ? 'pending approval' : 'auto-approved' }}
             </b-alert>
           </div>
@@ -96,7 +101,7 @@
           <b-button 
             type="submit" 
             variant="primary" 
-            :disabled="submitting"
+            :disabled="submitting || !selectedLeaveType"
           >
             <b-spinner small v-if="submitting" class="mr-1"></b-spinner>
             Submit Request
@@ -140,6 +145,10 @@
             {{ data.item.is_half_day ? '0.5' : data.value }}
           </template>
           
+          <template #cell(working_days)="data">
+            {{ formatWorkingDays(data.item.working_days) }}
+          </template>
+          
           <template #cell(actions)="data">
             <b-button 
               size="sm" 
@@ -180,7 +189,8 @@
         <strong>Request Details:</strong><br>
         • Type: {{ selectedRequestToDelete.type ? selectedRequestToDelete.type.name : 'N/A' }}<br>
         • Dates: {{ formatDate(selectedRequestToDelete.from_date) }} to {{ formatDate(selectedRequestToDelete.to_date) }}<br>
-        • Days: {{ selectedRequestToDelete.is_half_day ? '0.5' : selectedRequestToDelete.total_days }}
+        • Working Days: {{ formatWorkingDays(selectedRequestToDelete.working_days) }}<br>
+        • Duration: {{ selectedRequestToDelete.is_half_day ? '0.5' : selectedRequestToDelete.total_days }} day(s)
       </div>
       <p class="text-danger"><strong>This action cannot be undone.</strong></p>
     </b-modal>
@@ -212,8 +222,11 @@
                     <strong>Period:</strong> {{ formatDate(selectedRequestDetails.from_date) }} to {{ formatDate(selectedRequestDetails.to_date) }}
                   </b-list-group-item>
                   <b-list-group-item>
-                    <strong>Duration:</strong> {{ selectedRequestDetails.total_days }} day(s)
+                    <strong>Duration:</strong> {{ selectedRequestDetails.total_days }} working day(s)
                     <span v-if="selectedRequestDetails.is_half_day">(Half Day - {{ selectedRequestDetails.half_day_type }})</span>
+                  </b-list-group-item>
+                  <b-list-group-item v-if="selectedRequestDetails.working_days">
+                    <strong>Working Days:</strong> {{ formatWorkingDays(selectedRequestDetails.working_days) }}
                   </b-list-group-item>
                   <b-list-group-item>
                     <strong>Status:</strong> 
@@ -305,6 +318,26 @@ export default {
         { value: 'second_half', text: 'Second Half' }
       ],
       
+      // Day mapping
+      dayMap: {
+        'sun': 0,
+        'mon': 1,
+        'tue': 2,
+        'wed': 3,
+        'thu': 4,
+        'fri': 5,
+        'sat': 6
+      },
+      dayNameMap: {
+        'sun': 'Sunday',
+        'mon': 'Monday',
+        'tue': 'Tuesday',
+        'wed': 'Wednesday',
+        'thu': 'Thursday',
+        'fri': 'Friday',
+        'sat': 'Saturday'
+      },
+      
       // Pagination
       currentPage: 1,
       perPage: 10,
@@ -314,7 +347,7 @@ export default {
         { key: 'type.name', label: 'Type' },
         { key: 'from_date', label: 'From' },
         { key: 'to_date', label: 'To' },
-        { key: 'total_days', label: 'Days' },
+        { key: 'total_days', label: 'Working Days' },
         { key: 'status', label: 'Status' },
         { key: 'actions', label: 'Actions' }
       ]
@@ -342,29 +375,48 @@ export default {
     remainingDays() {
       return this.selectedLeaveType ? this.getAllocationRemaining(this.selectedLeaveType.id) : 0;
     },
+    formattedWorkingDays() {
+      if (!this.selectedLeaveType || !this.selectedLeaveType.working_days) {
+        return 'No working days configured';
+      }
+      
+      return this.formatWorkingDays(this.selectedLeaveType.working_days);
+    },
+    // Get working days from selected leave type
+    currentWorkingDays() {
+      if (!this.selectedLeaveType || !this.selectedLeaveType.working_days) {
+        return [];
+      }
+      return this.selectedLeaveType.working_days;
+    },
     calculatedDays() {
       if (!this.requestForm.from_date || !this.requestForm.to_date) return 0;
       
+      // If half-day is selected, return 0.5 regardless of date range
       if (this.requestForm.is_half_day === true) return 0.5;
       
       const start = new Date(this.requestForm.from_date);
       const end = new Date(this.requestForm.to_date);
-      const diffTime = Math.abs(end - start);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
       
-      return diffDays;
+      // Calculate working days between two dates using the leave type's working days
+      return this.countWorkingDays(start, end, this.currentWorkingDays);
     },
-    // Show duration options only for single day requests
+    // Show duration options only for single working day requests
     showDurationOptions() {
-      if (!this.requestForm.from_date || !this.requestForm.to_date) return true;
+      if (!this.requestForm.from_date || !this.requestForm.to_date || !this.selectedLeaveType) return false;
       
       const start = new Date(this.requestForm.from_date);
       const end = new Date(this.requestForm.to_date);
-      const diffTime = Math.abs(end - start);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
       
-      // Only show duration options for single day requests
-      return diffDays === 1;
+      // Check if it's a single day (same day)
+      if (start.toDateString() === end.toDateString()) {
+        // Check if this single day is a working day
+        const dayOfWeek = start.getDay();
+        const dayName = this.getDayNameFromNumber(dayOfWeek);
+        return this.currentWorkingDays.includes(dayName);
+      }
+      
+      return false;
     }
   },
   watch: {
@@ -436,6 +488,85 @@ export default {
       }
     },
     
+    /**
+     * Handle leave type change
+     */
+    onLeaveTypeChange() {
+      // Reset half-day when leave type changes
+      this.requestForm.is_half_day = false;
+      this.requestForm.half_day_type = null;
+      
+      // Trigger date recalculation
+      if (this.requestForm.from_date && this.requestForm.to_date) {
+        this.onDateChange();
+      }
+    },
+    
+    /**
+     * Count working days between two dates using specific working days array
+     */
+    countWorkingDays(startDate, endDate, workingDaysArray) {
+      if (!workingDaysArray || !Array.isArray(workingDaysArray) || workingDaysArray.length === 0) {
+        // If no working days specified, count all days
+        const diffTime = Math.abs(endDate - startDate);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      }
+      
+      let count = 0;
+      const current = new Date(startDate);
+      const end = new Date(endDate);
+      
+      // Loop through each day between start and end (inclusive)
+      while (current <= end) {
+        const dayOfWeek = current.getDay(); // 0=Sunday, 1=Monday, etc.
+        const dayName = this.getDayNameFromNumber(dayOfWeek);
+        
+        // Check if this day is a working day
+        if (workingDaysArray.includes(dayName)) {
+          count++;
+        }
+        
+        // Move to next day
+        current.setDate(current.getDate() + 1);
+      }
+      
+      return count;
+    },
+    
+    /**
+     * Get day name from day number
+     */
+    getDayNameFromNumber(dayNumber) {
+      const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      return days[dayNumber];
+    },
+    
+    /**
+     * Get day number from day name
+     */
+    getDayNumberFromName(dayName) {
+      return this.dayMap[dayName] || -1;
+    },
+    
+    /**
+     * Format day name for display
+     */
+    formatDayName(dayName) {
+      return this.dayNameMap[dayName] || dayName;
+    },
+    
+    /**
+     * Format working days array for display
+     */
+    formatWorkingDays(workingDaysArray) {
+      if (!workingDaysArray || !Array.isArray(workingDaysArray)) return 'N/A';
+      
+      return workingDaysArray
+        .sort((a, b) => this.getDayNumberFromName(a) - this.getDayNumberFromName(b))
+        .map(day => this.formatDayName(day))
+        .join(', ');
+    },
+    
     getAllocationRemaining(typeId) {
       const allocation = this.allocations.find(a => a.day_off_type_id === typeId);
       return allocation ? allocation.remaining_days : 0;
@@ -493,7 +624,13 @@ export default {
     async submitRequest() {
       this.submitting = true;
       try {
-        await api.post('/day-off-requests', this.requestForm);
+        const payload = {
+          ...this.requestForm,
+          // Note: working_days should come from the leave type in backend
+          // total_days should be calculated in backend as well
+        };
+        
+        await api.post('/day-off-requests', payload);
         
         this.$bvToast.toast('Leave request submitted successfully', {
           variant: 'success',

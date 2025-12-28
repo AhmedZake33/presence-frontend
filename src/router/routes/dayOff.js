@@ -16,7 +16,7 @@ export default [
     meta: {
       layout: 'content',
       requiresAuth: true,
-      roles: ['admin'],
+      roles: ['admin','manager'],
     }
   },
 ]

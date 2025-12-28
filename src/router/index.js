@@ -13,6 +13,8 @@ import formsTable from './routes/forms-tables'
 import others from './routes/others'
 import setting from './routes/setting'
 import dayOff from './routes/dayOff'
+import teams from './routes/teams'
+import welcome from './welcome.js'
 
 Vue.use(VueRouter)
 
@@ -23,7 +25,7 @@ const router = new VueRouter({
     return { x: 0, y: 0 }
   },
   routes: [
-    { path: '/', redirect: { name: 'attendance-dashboard' } },
+    { path: '/', redirect: { name: 'welcome' } },
     ...apps,
     ...dashboard,
     ...pages,
@@ -33,6 +35,8 @@ const router = new VueRouter({
     ...others,
     ...setting,
     ...dayOff,
+    ...teams,
+    ...welcome,
     {
       path: '*',
       redirect: 'error-404',

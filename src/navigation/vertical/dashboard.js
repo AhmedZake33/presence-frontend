@@ -34,12 +34,13 @@ export default [
         title: 'Employees',
         icon: 'UserIcon',
         route: 'attendance-employees',
-        meta: { role: ['admin'] },
+        meta: { role: ['admin','manager'] },
       },
       {
         title: 'Attendance',
         icon: 'CalendarIcon',
         route: 'attendance', 
+        meta: { role: ['employee'] },
       },
       {
         title: 'Create Day Off',
@@ -51,6 +52,12 @@ export default [
         title: 'Day Off Requests',
         icon: 'CalendarIcon',
         route: 'day-off-requests',
+        meta: { role: ['admin','manager'] },
+      },
+      {
+        title: 'Teams',
+        icon: 'UsersIcon',
+        route: 'teams',
         meta: { role: ['admin'] },
       },
       {
