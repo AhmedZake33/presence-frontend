@@ -7,12 +7,14 @@
         <b-row>
           <b-col md="6">
           <b-card style="height: 150px;">
-          <h4 style="margin-top: 50px;">Total Employees: {{ summary.totalEmployees }}</h4>
+            
+            <h5 class="mt-3">Total Employees: <b-badge variant="success">{{ summary.totalEmployees }}</b-badge></h5>
+            <h5>Total Managers: <b-badge variant="primary">{{ summary.totalManagers }}</b-badge></h5>
           </b-card>
           </b-col>
           <b-col md="6">
           <b-card style="height: 150px;">
-            <h4 style="margin-top: 50px;">Present Today: {{ summary.presentToday }}</h4>
+            <h4 style="margin-top: 50px;">Present Today: <b-badge variant="primary">{{ summary.presentToday }}</b-badge></h4>
           </b-card>
           </b-col>
         </b-row>

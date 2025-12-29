@@ -4,16 +4,7 @@
     :class="{'open': isCustomizerOpen}"
   >
     <!-- Toggler -->
-    <b-link
-      class="customizer-toggle d-flex align-items-center justify-content-center"
-      @click="isCustomizerOpen = !isCustomizerOpen"
-    >
-      <feather-icon
-        icon="SettingsIcon"
-        size="15"
-        class="spinner"
-      />
-    </b-link>
+    
     <!-- /Toggler -->
 
     <!-- Header -->
