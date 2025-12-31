@@ -45,7 +45,7 @@
           label="Name" 
           label-for="name"
           :state="formState.name"
-          invalid-feedback="Name is required and must be at least 2 characters"
+          :invalid-feedback="formErrors.name || 'Name is required'"
         >
           <b-form-input
             id="name"
@@ -60,7 +60,7 @@
           label="Email" 
           label-for="email"
           :state="formState.email"
-          invalid-feedback="Please enter a valid email address"
+          :invalid-feedback="formErrors.email || 'Valid email is required'"
         >
           <b-form-input
             id="email"
@@ -76,7 +76,7 @@
           label="Type" 
           label-for="type"
           :state="formState.type"
-          invalid-feedback="Please select user type"
+          :invalid-feedback="formErrors.type || 'Please select user type'"
         >
           <b-form-select
             id="type"
@@ -95,7 +95,7 @@
           label="Password" 
           label-for="password"
           :state="formState.password"
-          invalid-feedback="Password must be at least 6 characters"
+          :invalid-feedback="formErrors.password || 'Password is required'"
         >
           <b-form-input
             id="password"
@@ -419,6 +419,12 @@ export default {
         type: null,
         password: null
       },
+      formErrors: {
+        name: null,
+        email: null,
+        type: null,
+        password: null
+      },
       
       // View Toggle
       showDetailedView: true,
@@ -505,22 +511,47 @@ export default {
     validateForm() {
       let isValid = true;
       
+      
       // Validate name
-      this.formState.name = this.form.name.length >= 2;
-      if (!this.formState.name) isValid = false;
+      this.formErrors.name = null;
+      if (!this.form.name || this.form.name.length < 2) {
+        this.formState.name = false;
+        this.formErrors.name = "Name must be at least 2 characters";
+        isValid = false;
+      } else {
+        this.formState.name = true;
+      }
       
       // Validate email
+      this.formErrors.email = null;
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      this.formState.email = emailRegex.test(this.form.email);
-      if (!this.formState.email) isValid = false;
+      if (!this.form.email || !emailRegex.test(this.form.email)) {
+        this.formState.email = false;
+        this.formErrors.email = "Please enter a valid email address";
+        isValid = false;
+      } else {
+        this.formState.email = true;
+      }
       
       // Validate type
-      this.formState.type = this.form.type !== null && this.form.type !== '';
-      if (!this.formState.type) isValid = false;
+      this.formErrors.type = null;
+      if (!this.form.type) {
+         this.formState.type = false;
+         this.formErrors.type = "Please select a user type";
+         isValid = false;
+      } else {
+         this.formState.type = true;
+      }
       
       // Validate password
-      this.formState.password = this.form.password.length >= 6;
-      if (!this.formState.password) isValid = false;
+      this.formErrors.password = null;
+      if (!this.form.password || this.form.password.length < 6) {
+        this.formState.password = false;
+        this.formErrors.password = "Password must be at least 6 characters";
+        isValid = false;
+      } else {
+        this.formState.password = true;
+      }
       
       return isValid;
     },
@@ -558,12 +589,21 @@ export default {
             this.getAllUser();
           }
         })
+
         .catch((error) => {
           let errorMsg = 'Error adding user';
           if (error.response?.data?.errors) {
             // Handle Laravel validation errors
             const errors = error.response.data.errors;
-            errorMsg = Object.values(errors)[0][0];
+            errorMsg = "Please check the form for errors";
+            
+            // Map errors to form fields
+            Object.keys(errors).forEach(key => {
+                if (this.formState.hasOwnProperty(key)) {
+                    this.formState[key] = false;
+                    this.formErrors[key] = errors[key][0];
+                }
+            });
           } else if (error.response?.data?.message) {
             errorMsg = error.response.data.message;
           } else if (error.response?.data?.error) {
@@ -589,6 +629,12 @@ export default {
         password: ''
       };
       this.formState = {
+        name: null,
+        email: null,
+        type: null,
+        password: null
+      };
+      this.formErrors = {
         name: null,
         email: null,
         type: null,

@@ -4,6 +4,7 @@
 
     <b-row>
       <b-col md="12">
+        
         <b-row>
           <b-col md="6">
           <b-card style="height: 150px;">
@@ -19,10 +20,23 @@
           </b-col>
         </b-row>
         
+
       </b-col>
       <b-col md="12">
-        <b-card title="Attendance Stats">
-          <line-chart :data="chartData" :options="chartOptions"  style="height:300px;"  />
+        <b-card>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="card-title mb-0">Attendance Stats</h4>
+            <div class="d-flex align-items-center">
+              <span class="mr-2 font-weight-bold">Period:</span>
+              <b-form-input
+                type="month"
+                v-model="filterDate"
+                class="w-auto"
+                @change="loadDashboardData"
+              />
+            </div>
+          </div>
+          <line-chart :data="chartData" :options="chartOptions" style="height:300px;" />
         </b-card>
       </b-col>
     </b-row>
@@ -32,15 +46,19 @@
 <script>
 import api from "@/libs/axios";
 import LineChart from '@/components/charts/LineChart.js'
+
 import loading from "@/views/components/my-components/loading.vue";
+import { BFormInput } from 'bootstrap-vue'
 
 
 export default {
   components: {
-    LineChart, loading
+    LineChart, loading, BFormInput
   },
   data() {
     return {
+      filterDate: null,
+      load: false,
       summary: {
         totalEmployees: 0,
         presentToday: 0,
@@ -85,31 +103,49 @@ export default {
     };
   },
   async created() {
-    this.load = true
-    const res = await api.get("/dashboard/summary");
-    this.summary = res.data;
-    const series = res.data.series || []
-    this.load = false
-    const labels = series.map(item => item.date)
-    const values = series.map(item => item.cnt)
-    this.chartData = {
-        labels: labels,
-        datasets: [
-          {
-            label: 'Attendance',
-            data: values,
-            borderColor: '#42A5F5',
-            backgroundColor: 'rgba(66,165,245,0.2)',
-            fill: false,          // no area fill
-            lineTension: 0.1,     // makes smooth line (0 = straight)
-            borderWidth: 2,
-            pointRadius: 4,
-            pointBackgroundColor: '#42A5F5',
-            showLine: true,       // show line between points
-                  type: 'line',            // 👈 force line type
-          },
-        ],
-      }
+    // Set default to last month
+    const date = new Date();
+    date.setMonth(date.getMonth() - 1);
+    this.filterDate = date.toISOString().slice(0, 7); // YYYY-MM
+    
+    await this.loadDashboardData();
+  },
+  methods: {
+    async loadDashboardData() {
+        this.load = true
+        const [year, month] = this.filterDate.split('-');
+        
+        try {
+            const res = await api.get("/dashboard/summary", { params: { month, year } });
+            // console.log(res)
+            this.summary = res.data;
+            const series = res.data.series || []
+            const labels = series.map(item => item.date)
+            const values = series.map(item => item.cnt)
+            this.chartData = {
+                labels: labels,
+                datasets: [
+                {
+                    label: 'Attendance',
+                    data: values,
+                    borderColor: '#42A5F5',
+                    backgroundColor: 'rgba(66,165,245,0.2)',
+                    fill: false,          // no area fill
+                    lineTension: 0.1,     // makes smooth line (0 = straight)
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#42A5F5',
+                    showLine: true,       // show line between points
+                        type: 'line',            // 👈 force line type
+                },
+                ],
+            }
+        } catch(e) {
+            console.error(e)
+        } finally {
+            this.load = false
+        }
+    }
   },
 };
 </script>
