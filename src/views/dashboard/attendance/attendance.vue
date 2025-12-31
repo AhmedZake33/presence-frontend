@@ -1,7 +1,10 @@
 <template>
   <div>
     <loading :visible="loading" text="Processing..." />
-
+    <div v-if="!checkoutRecord && currentDuration" class="mt-2">
+      <h2 class="text-primary mb-0">{{ currentDuration }}</h2>
+      <!-- <small class="text-muted">Active Duration</small> -->
+    </div>
     <b-card class="mb-3">
       <div class="d-flex justify-content-between align-items-center">
         <div>
@@ -27,6 +30,8 @@
         <b-badge variant="primary">Checked in</b-badge>
         <small class="ml-2">at <strong>{{ checkinRecord.time }}</strong></small>
         <small class="ml-2 text-muted">({{ checkinRecord.status || 'status unknown' }})</small>
+        
+        <!-- Timer is now in Navbar -->
       </div>
     </b-card>
 
@@ -107,6 +112,8 @@ export default {
       this.loading = true;
       try {
         await Promise.all([this.getCanClock(), this.getToday()]);
+        // Sync global timer
+        await this.$store.dispatch('attendance/fetchAttendanceStatus');
       } finally {
         this.loading = false;
       }
@@ -174,6 +181,9 @@ export default {
         // refresh both can-clock and today's records
         await this.getCanClock();
         await this.getToday();
+        
+        // Sync global timer
+        await this.$store.dispatch('attendance/fetchAttendanceStatus');
 
         // Optionally open modal or show details of created record
         // e.g. payload.status and payload.meta are available if controller provides them

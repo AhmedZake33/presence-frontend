@@ -6,12 +6,6 @@
     right
   >
     <template #button-content>
-      <b-img
-        :src="currentLocale.img"
-        height="14px"
-        width="22px"
-        :alt="currentLocale.locale"
-      />
       <span class="ml-50 text-body">{{ currentLocale.name }}</span>
     </template>
     <b-dropdown-item
@@ -19,12 +13,6 @@
       :key="localeObj.locale"
       @click="$i18n.locale = localeObj.locale"
     >
-      <b-img
-        :src="localeObj.img"
-        height="14px"
-        width="22px"
-        :alt="localeObj.locale"
-      />
       <span class="ml-50">{{ localeObj.name }}</span>
     </b-dropdown-item>
   </b-nav-item-dropdown>
@@ -50,24 +38,13 @@ export default {
     const locales = [
       {
         locale: 'en',
-        img: require('@/assets/images/flags/en.png'),
         name: 'English',
       },
       {
-        locale: 'fr',
-        img: require('@/assets/images/flags/fr.png'),
-        name: 'French',
+        locale: 'ar',
+        name: 'العربية',
       },
-      {
-        locale: 'de',
-        img: require('@/assets/images/flags/de.png'),
-        name: 'German',
-      },
-      {
-        locale: 'pt',
-        img: require('@/assets/images/flags/pt.png'),
-        name: 'Portuguese',
-      },
+     
     ]
     /* eslint-disable global-require */
 

@@ -23,6 +23,7 @@
 
     <!-- Right Col -->
     <b-navbar-nav class="nav align-items-center ml-auto">
+      <global-timer />
       <locale />
       <dark-Toggler class="d-none d-lg-block" />
       <search-bar />
@@ -44,6 +45,7 @@ import SearchBar from './components/SearchBar.vue'
 import CartDropdown from './components/CartDropdown.vue'
 import NotificationDropdown from './components/NotificationDropdown.vue'
 import UserDropdown from './components/UserDropdown.vue'
+import GlobalTimer from "@/views/components/attendance/GlobalTimer.vue";
 
 export default {
   components: {
@@ -58,6 +60,7 @@ export default {
     CartDropdown,
     NotificationDropdown,
     UserDropdown,
+    GlobalTimer,
   },
   props: {
     toggleVerticalMenuActive: {

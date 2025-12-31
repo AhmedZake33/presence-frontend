@@ -84,28 +84,28 @@
       
       <!-- User Info Row -->
       <b-row class="mt-3">
-        <b-col md="3">
+        <b-col md="4">
           <div class="small text-muted">User Type</div>
           <div class="font-weight-bold">
             {{ formatUserType(employee.user_type) || 'Not specified' }}
           </div>
         </b-col>
-        <b-col md="3">
+        <b-col md="4">
           <div class="small text-muted">Joined</div>
           <div class="font-weight-bold">{{ formatDate(employee.created_at) }}</div>
         </b-col>
-        <b-col md="3">
+        <b-col md="4">
           <div class="small text-muted">Total Teams</div>
           <div class="font-weight-bold">{{ teams.length }}</div>
         </b-col>
-        <b-col md="3">
+        <!-- <b-col md="3">
           <div class="small text-muted">Status</div>
           <div>
             <b-badge :variant="employee.is_active ? 'success' : 'danger'">
               {{ employee.is_active ? 'Active' : 'Inactive' }}
             </b-badge>
           </div>
-        </b-col>
+        </b-col> -->
       </b-row>
     </b-card>
 

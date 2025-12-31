@@ -15,7 +15,7 @@
         size="40"
         :src="userData.avatar"
         variant="light-primary"
-        badge
+        :badge="isCheckedIn"
         class="badge-minimal"
         badge-variant="success"
       >
@@ -61,6 +61,11 @@ export default {
       userData: JSON.parse(localStorage.getItem('user')),
       avatarText,
     }
+  },
+  computed: {
+    isCheckedIn() {
+      return this.$store.getters['attendance/isCheckedIn']
+    },
   },
   methods: {
     logout() {

@@ -31,6 +31,7 @@ export default new Vuex.Store({
     'app-ecommerce': ecommerceStoreModule,
     auth,
     settings,
+    attendance: require('./modules/attendance').default,
   },
   strict: process.env.DEV,
 })

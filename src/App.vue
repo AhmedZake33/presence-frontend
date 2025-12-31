@@ -97,6 +97,9 @@ export default {
       store.commit('app/UPDATE_WINDOW_WIDTH', val)
     })
 
+    // Init attendance timer
+    store.dispatch('attendance/fetchAttendanceStatus');
+
     return {
       skinClasses,
       enableScrollToTop,

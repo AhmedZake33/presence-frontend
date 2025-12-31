@@ -154,54 +154,21 @@
                 type="submit"
                 variant="primary"
                 block
-                :disabled="invalid"
+                :disabled="invalid || isLoading"
               >
-                Sign in
+                <b-spinner
+                  v-if="isLoading"
+                  small
+                  variant="light"
+                />
+                <span v-else>Sign in</span>
               </b-button>
             </b-form>
           </validation-observer>
 
-          <b-card-text class="text-center mt-2">
-            <span>New on our platform? </span>
-            <b-link :to="{name:'auth-register'}">
-              <span>&nbsp;Create an account</span>
-            </b-link>
-          </b-card-text>
+         
 
-          <!-- divider -->
-          <div class="divider my-2">
-            <div class="divider-text">
-              or
-            </div>
-          </div>
-
-          <!-- social buttons -->
-          <div class="auth-footer-btn d-flex justify-content-center">
-            <b-button
-              variant="facebook"
-              href="javascript:void(0)"
-            >
-              <feather-icon icon="FacebookIcon" />
-            </b-button>
-            <b-button
-              variant="twitter"
-              href="javascript:void(0)"
-            >
-              <feather-icon icon="TwitterIcon" />
-            </b-button>
-            <b-button
-              variant="google"
-              href="javascript:void(0)"
-            >
-              <feather-icon icon="MailIcon" />
-            </b-button>
-            <b-button
-              variant="github"
-              href="javascript:void(0)"
-            >
-              <feather-icon icon="GithubIcon" />
-            </b-button>
-          </div>
+         
         </b-col>
       </b-col>
     <!-- /Login-->
@@ -214,7 +181,7 @@
 import { ValidationProvider, ValidationObserver } from 'vee-validate'
 import VuexyLogo from '@core/layouts/components/Logo.vue'
 import {
-  BRow, BCol, BLink, BFormGroup, BFormInput, BInputGroupAppend, BInputGroup, BFormCheckbox, BCardText, BCardTitle, BImg, BForm, BButton, BAlert, VBTooltip,
+  BRow, BCol, BLink, BFormGroup, BFormInput, BInputGroupAppend, BInputGroup, BFormCheckbox, BCardText, BCardTitle, BImg, BForm, BButton, BAlert, VBTooltip, BSpinner,
 } from 'bootstrap-vue'
 import useJwt from '@/auth/jwt/useJwt'
 import { required, email } from '@validations'
@@ -247,6 +214,7 @@ export default {
     VuexyLogo,
     ValidationProvider,
     ValidationObserver,
+    BSpinner,
   },
   mixins: [togglePasswordVisibility],
   data() {
@@ -254,6 +222,7 @@ export default {
       status: '',
       password: '',
       userEmail: '',
+      isLoading: false,
       sideImg: require('@/assets/images/pages/login-v2.svg'),
 
       // validation rules
@@ -276,34 +245,36 @@ export default {
   },
   methods: {
     async login() {
-      
-  try {
-    const res = await api.post("/login", {
-      email: this.userEmail,
-      password: this.password,
-    });
+      this.isLoading = true;
+      try {
+        const res = await api.post("/login", {
+          email: this.userEmail,
+          password: this.password,
+        });
 
-    try{
-      await store.dispatch('auth/login', { response:res })
-    }catch(err){
-      console.log(err);
+        try{
+          await store.dispatch('auth/login', { response:res })
+        }catch(err){
+          console.log(err);
+        }
+
+        // save token + user
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        this.$router.replace({name : "welcome"});
+        // this.$router.replace(getHomeRouteForLoggedInUser(res.data.user.type.name))
+
+
+      } catch (err) {
+        this.$bvToast.toast("Invalid credentials", {
+          title: "Error",
+          variant: "danger",
+          solid: true,
+        });
+      } finally {
+        this.isLoading = false;
+      }
     }
-
-    // save token + user
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("user", JSON.stringify(res.data.user));
-    this.$router.replace({name : "welcome"});
-    // this.$router.replace(getHomeRouteForLoggedInUser(res.data.user.type.name))
-
-
-  } catch (err) {
-    this.$bvToast.toast("Invalid credentials", {
-      title: "Error",
-      variant: "danger",
-      solid: true,
-    });
-  }
-}
   },
 }
 </script>
