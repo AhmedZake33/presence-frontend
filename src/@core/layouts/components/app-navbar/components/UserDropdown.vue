@@ -12,12 +12,28 @@
         <span class="user-status">{{ userData.type.name }}</span>
       </div>
       <b-avatar
+      v-if="isCheckedIn"
         size="40"
         :src="userData.avatar"
         variant="light-primary"
         :badge="isCheckedIn"
         class="badge-minimal"
         badge-variant="success"
+      >
+        <feather-icon
+          v-if="!userData.fullName"
+          icon="UserIcon"
+          size="22"
+        />
+      </b-avatar>
+      <b-avatar
+      v-else
+        size="40"
+        :src="userData.avatar"
+        variant="light-primary"
+        :badge="true"
+        class="badge-minimal"
+        badge-variant="danger"
       >
         <feather-icon
           v-if="!userData.fullName"

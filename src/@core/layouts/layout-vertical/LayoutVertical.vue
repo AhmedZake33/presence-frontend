@@ -113,11 +113,11 @@ export default {
     },
   filteredNavItems() {
     const role = this.$store.getters['auth/userRole']
-    console.log('Current role:', role)
+    console.log('DEBUG: Current user role:', role)
+    console.log('DEBUG: isLoggedIn:', this.isLoggedIn)
+    console.log('DEBUG: isNavMenuHidden:', this.isNavMenuHidden)
 
     function filterByRole(items) {
-      console.log("items")
-      console.log(items)
       return items
         .map(item => {
           // Recursively filter children
@@ -127,9 +127,10 @@ export default {
           }
 
           // Check role restriction
+          // If item has no role defined, it is allowed for everyone
           const allowed =
             !item.meta?.role ||
-            item.meta.role.map(r => r.toLowerCase()).includes(role.toLowerCase())
+            item.meta.role.map(r => r.toLowerCase()).includes(String(role).toLowerCase())
 
           // Keep this item only if:
           //  - user is allowed
@@ -146,7 +147,7 @@ export default {
     }
 
     const filtered = filterByRole(require('@/navigation/vertical').default)
-    console.log('Filtered nav items:', filtered)
+    console.log('DEBUG: Filtered nav items count:', filtered.length)
     return filtered
   },
 
