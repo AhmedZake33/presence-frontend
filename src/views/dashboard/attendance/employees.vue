@@ -90,6 +90,45 @@
             <option value="3">Manager</option>
           </b-form-select>
         </b-form-group>
+        
+        <b-form-group 
+          v-if="form.type && form.type != '1'"
+          label="Team" 
+          label-for="team"
+          :state="formState.team_id"
+          :invalid-feedback="formErrors.team_id || 'Please select a team'"
+        >
+          <b-form-select
+            id="team"
+            v-model="form.team_id"
+            :state="formState.team_id"
+            :options="teamOptions"
+            @change="form.team_role = null" 
+          >
+            <template #first>
+              <b-form-select-option :value="null">Select Team (Optional)</b-form-select-option>
+            </template>
+          </b-form-select>
+        </b-form-group>
+
+        <b-form-group 
+          v-if="form.type == '2' && form.team_id"
+          label="Team Role" 
+          label-for="team-role"
+          :state="formState.team_role"
+          :invalid-feedback="formErrors.team_role || 'Please select a role'"
+        >
+          <b-form-select
+            id="team-role"
+            v-model="form.team_role"
+            :state="formState.team_role"
+            :options="filteredTeamRoleOptions"
+          >
+            <template #first>
+              <b-form-select-option :value="null">Select Role</b-form-select-option>
+            </template>
+          </b-form-select>
+        </b-form-group>
 
         <b-form-group 
           label="Password" 
@@ -411,20 +450,35 @@ export default {
         name: '',
         email: '',
         type: null,
+        team_id: null,
+        team_role: null,
         password: ''
       },
       formState: {
         name: null,
         email: null,
         type: null,
+        team_id: null,
+        team_role: null,
         password: null
       },
       formErrors: {
         name: null,
         email: null,
         type: null,
+        team_id: null,
+        team_role: null,
         password: null
       },
+      
+      teams: [],
+      teamRoleOptions: [
+        { value: 'manager', text: 'Manager' },
+        { value: 'team_lead', text: 'Team Lead' },
+        { value: 'senior', text: 'Senior' },
+        { value: 'junior', text: 'Junior' },
+        { value: 'fresh', text: 'Fresh'}
+      ],
       
       // View Toggle
       showDetailedView: true,
@@ -502,9 +556,25 @@ export default {
       },
     }
   },
+  computed: {
+    teamOptions() {
+      return this.teams.map(team => ({
+        value: team.id,
+        text: team.name
+      }));
+    },
+    filteredTeamRoleOptions() {
+      // If user is employee (type 2), hide 'manager' role
+      if (this.form.type == '2') {
+        return this.teamRoleOptions.filter(role => role.value !== 'manager');
+      }
+      return this.teamRoleOptions;
+    }
+  },
   mounted(){
     this.loadStatistics();
     this.getAllUser();
+    this.loadTeams();
   },
   methods: {
     // Add User Methods
@@ -542,7 +612,27 @@ export default {
       } else {
          this.formState.type = true;
       }
+
+      // Validate Team (Optional - just reset state)
+      // If you want it required, add logic here. For now it's optional.
+      this.formState.team_id = null;
+      this.formErrors.team_id = null;
       
+      // Validate Team Role if Team is selected and User Type is Employee
+      if (this.form.type == '2' && this.form.team_id) {
+        if (!this.form.team_role) {
+          this.formState.team_role = false;
+          this.formErrors.team_role = "Role is required for employees when assigning a team";
+          isValid = false;
+        } else {
+          this.formState.team_role = true;
+          this.formErrors.team_role = null;
+        }
+      } else {
+        this.formState.team_role = null;
+        this.formErrors.team_role = null;
+      }
+
       // Validate password
       this.formErrors.password = null;
       if (!this.form.password || this.form.password.length < 6) {
@@ -568,11 +658,22 @@ export default {
       
       this.submitting = true;
       
-      // Convert type to number if needed
+      // Build form data
       const formData = {
         ...this.form,
         type: parseInt(this.form.type)
       };
+
+      // Admin (type 1) should not have team info
+      if (formData.type === 1) {
+        formData.team_id = null;
+        formData.team_role = null;
+      }
+      
+      // Manager (type 3) automatically gets 'manager' role
+      if (formData.type === 3) {
+        formData.team_role = 'manager';
+      }
       
       api.post("/users", formData)
         .then((response) => {
@@ -626,20 +727,43 @@ export default {
         name: '',
         email: '',
         type: null,
+        team_id: null,
+        team_role: null,
         password: ''
       };
       this.formState = {
         name: null,
         email: null,
         type: null,
+        team_id: null,
+        team_role: null,
         password: null
       };
       this.formErrors = {
         name: null,
         email: null,
         type: null,
+        team_id: null,
+        team_role: null,
         password: null
       };
+    },
+    
+    loadTeams() {
+      api.get("/teams")
+        .then((response) => {
+           if (response.data && response.data.data) {
+             // Handle paginated or plain response
+             this.teams = Array.isArray(response.data.data) 
+               ? response.data.data 
+               : (response.data.data.data || []);
+           } else {
+             this.teams = response.data || [];
+           }
+        })
+        .catch((error) => {
+          console.error("Error loading teams:", error);
+        });
     },
     
     // Statistics Methods with Server-side Pagination
