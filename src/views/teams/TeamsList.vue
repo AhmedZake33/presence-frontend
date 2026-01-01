@@ -77,7 +77,7 @@
         </template>
 
         <!-- Team Lead Column -->
-        <template #cell(team_lead)="data">
+        <!-- <template #cell(team_lead)="data">
           <div v-if="data.item.team_lead">
             <div class="d-flex align-items-center">
               <b-avatar
@@ -94,7 +94,7 @@
             </div>
           </div>
           <span v-else class="text-muted">Not assigned</span>
-        </template>
+        </template> -->
 
         <!-- Manager Column -->
         <template #cell(manager)="data">
@@ -210,23 +210,7 @@
         </b-form-group>
 
         <b-row>
-          <b-col md="6">
-            <b-form-group label="Team Lead" label-for="team-lead">
-              <b-form-select
-                id="team-lead"
-                v-model="form.team_lead_id"
-                :options="userOptions"
-              >
-                <template #first>
-                  <b-form-select-option :value="null">
-                    Select Team Lead
-                  </b-form-select-option>
-                </template>
-              </b-form-select>
-            </b-form-group>
-          </b-col>
-
-          <b-col md="6">
+          <b-col md="12">
             <b-form-group label="Manager" label-for="team-manager">
               <b-form-select
                 id="team-manager"
@@ -313,7 +297,6 @@ export default {
         name: '',
         code: '',
         description: '',
-        team_lead_id: null,
         manager_id: null,
         is_active: true
       },
@@ -328,7 +311,7 @@ export default {
       fields: [
         { key: 'name', label: 'Team Name', sortable: true },
         { key: 'code', label: 'Code', sortable: true },
-        { key: 'team_lead', label: 'Team Lead' },
+        // { key: 'team_lead', label: 'Team Lead' },
         { key: 'manager', label: 'Manager' },
         { key: 'members', label: 'Members' },
         { key: 'status', label: 'Status', sortable: true },
@@ -429,7 +412,6 @@ export default {
         name: '',
         code: '',
         description: '',
-        team_lead_id: null,
         manager_id: null,
         is_active: true
       };
@@ -443,7 +425,6 @@ export default {
         name: team.name,
         code: team.code,
         description: team.description || '',
-        team_lead_id: team.team_lead_id,
         manager_id: team.manager_id,
         is_active: team.is_active
       };

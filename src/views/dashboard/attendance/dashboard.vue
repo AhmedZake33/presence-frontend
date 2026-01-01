@@ -105,7 +105,7 @@ export default {
   async created() {
     // Set default to last month
     const date = new Date();
-    date.setMonth(date.getMonth() - 1);
+    date.setMonth(date.getMonth());
     this.filterDate = date.toISOString().slice(0, 7); // YYYY-MM
     
     await this.loadDashboardData();

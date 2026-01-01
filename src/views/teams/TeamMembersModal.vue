@@ -58,14 +58,68 @@
       </b-card-body>
     </b-card>
 
-    <!-- Current Members -->
-    <b-card>
+    <!-- Team manager -->
+    <b-card v-if="managers.length > 0">
       <b-card-title>
-        <h5 class="mb-0">Current Members ({{ members.length }})</h5>
+        <h5 class="mb-0 text-primary">Team Managers ({{ managers.length }})</h5>
       </b-card-title>
       <b-card-body>
         <BaseTable
-          :items="members"
+          :items="managers"
+          :fields="memberFields"
+          :paginated="false"
+        >
+          <!-- Member Name -->
+          <template #cell(name)="data">
+            <div class="d-flex align-items-center">
+              <b-avatar
+                size="sm"
+                :text="getInitials(data.item.name)"
+                variant="light-primary"
+                class="mr-2"
+              />
+              <div>
+                <strong>{{ data.item.name }}</strong>
+                <br>
+                <small class="text-muted">{{ data.item.email }}</small>
+              </div>
+            </div>
+          </template>
+
+          <!-- Role -->
+          <template #cell(role)="data">
+             <b-badge variant="light-primary">
+               {{ data.item.pivot.role.toUpperCase() }}
+             </b-badge>
+          </template>
+
+          <!-- Joined Date -->
+          <template #cell(joined_date)="data">
+            {{ formatDate(data.item.pivot.joined_date) }}
+          </template>
+
+          <!-- Actions -->
+          <template #cell(actions)="data">
+            <b-button
+              size="sm"
+              variant="flat-danger"
+              @click="removeMember(data.item)"
+            >
+              <feather-icon icon="Trash2Icon" />
+            </b-button>
+          </template>
+        </BaseTable>
+      </b-card-body>
+    </b-card>
+
+    <!-- Team Members -->
+    <b-card>
+      <b-card-title>
+        <h5 class="mb-0">Team Members ({{ otherMembers.length }})</h5>
+      </b-card-title>
+      <b-card-body>
+        <BaseTable
+          :items="otherMembers"
           :fields="memberFields"
           :paginated="false"
         >
@@ -95,7 +149,7 @@
           <template #cell(role)="data">
             <b-form-select
               v-model="data.item.pivot.role"
-              :options="roleOptions"
+              :options="filteredRoleOptions"
               size="sm"
               @change="updateMemberRole(data.item)"
             />
@@ -173,6 +227,16 @@ export default {
         text: `${user.name} (${user.email})`,
         type: user.type
       }));
+    },
+    managers() {
+      return this.members.filter(m => m.pivot.role === 'manager');
+    },
+    otherMembers() {
+      return this.members.filter(m => m.pivot.role !== 'manager');
+    },
+    filteredRoleOptions() {
+      // Hide 'manager' role from the members role dropdown
+      return this.roleOptions.filter(role => role.value !== 'manager');
     }
   },
   created() {
