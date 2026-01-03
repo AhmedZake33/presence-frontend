@@ -36,18 +36,18 @@ export default [
     route: 'attendance-employees',
     meta: { role: ['admin', 'manager'] },
   },
-  // {
-  //   title: 'Attendance',
-  //   icon: 'CalendarIcon',
-  //   route: 'attendance', 
-  //   meta: { role: ['employee'] },
-  // },
-  // {
-  //   title: 'Create Day Off',
-  //   icon: 'CalendarIcon',
-  //   route: 'create-day-off',
-  //   meta: { role: ['employee'] },
-  // },
+  {
+    title: 'Attendance',
+    icon: 'CalendarIcon',
+    route: 'attendance', 
+    meta: { role: ['employee'] },
+  },
+  {
+    title: 'Day Off',
+    icon: 'CalendarIcon',
+    route: 'create-day-off',
+    meta: { role: ['employee'] },
+  },
   {
     title: 'Day Off Requests',
     icon: 'CalendarIcon',

@@ -359,7 +359,7 @@ export default {
         { value: null, text: 'Select Leave Type', disabled: true },
         ...this.leaveTypes.map(type => ({
           value: type.id,
-          text: `${type.name} (${this.getAllocationRemaining(type.id)} days left)`
+          text: `${type.name} (${this.getAllocationRemaining(type.id) === 0 ? type.max_days_per_year : this.getAllocationRemaining(type.id)} days left)  (${type.requires_approval ? 'Requires Approval' : 'No Approval Required'})` 
         }))
       ];
     },
@@ -636,9 +636,9 @@ export default {
           variant: 'success',
           solid: true
         });
-        
+        this.loadData();
         this.resetForm();
-        this.loadMyRequests(this.currentPage, this.perPage);
+        // this.loadMyRequests(this.currentPage, this.perPage);
       } catch (error) {
         const message = error.response?.data?.message || 'Error submitting request';
         this.$bvToast.toast(message, {

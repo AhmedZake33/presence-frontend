@@ -18,7 +18,7 @@
 
       <b-badge variant="success" v-if="isAdmin">Admin Access</b-badge>
       <b-badge variant="info" v-else-if="isManager">Manager Access</b-badge>
-      <b-badge variant="secondary" v-else>Student Access</b-badge>
+      <b-badge variant="secondary" v-else>Employee Access</b-badge>
     </b-card>
   </div>
 </template>
