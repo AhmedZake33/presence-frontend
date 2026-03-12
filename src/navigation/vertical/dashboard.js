@@ -18,6 +18,7 @@ export default [
   //     },
   //   ],
   // },
+  
   {
     title: 'Dashboard',
     icon: 'HomeIcon',
@@ -29,6 +30,12 @@ export default [
     icon: 'HomeIcon',
     route: 'attendance-dashboard',
     meta: { role: ['admin'] },
+  },
+  {
+    title: 'Profile',
+    icon: 'UserIcon',
+    route: 'profile',
+    meta: { role: ['employee', 'admin', 'manager'] },
   },
   {
     title: 'Employees',

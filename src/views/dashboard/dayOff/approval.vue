@@ -241,7 +241,7 @@
     <b-modal v-model="modals.revoke" title="Revoke Approval" @ok="revokeRequest">
       <p>Are you sure you want to revoke approval for <strong>{{ selectedRequest && selectedRequest.user ? selectedRequest.user.name : '' }}'s</strong> leave request?</p>
       <b-alert variant="warning" show>
-        This will return the leave days to the employee's allocation and notify the employee.
+        This will return the leave days to the employee's allocation.
       </b-alert>
     </b-modal>
   </div>
@@ -463,7 +463,7 @@ export default {
 
     async revokeRequest() {
       try {
-        await api.patch(`/admin/day-off-requests/${this.selectedRequest.id}/revoke`)
+        await api.patch(`/day-off-requests/${this.selectedRequest.id}/revoke`)
         
         this.$bvToast.toast(`Approval revoked for ${this.selectedRequest.user.name}`, {
           variant: 'success',
