@@ -58,17 +58,6 @@
             {{ teams.length > 0 ? 'Manage Teams' : 'Assign to Team' }}
           </b-button>
 
-          <!-- Only show Add Day Off button for employees, not for viewing own profile -->
-          <!--<b-button 
-            variant="primary" 
-            @click="showAddDayOffModal"
-            v-if="!isViewingOwnProfile && employee.user_type !== 'manager'"
-          >
-            <feather-icon icon="PlusIcon" class="mr-1" />
-            Add Day Off
-          </b-button>
-          -->
-
           <!-- Edit Profile Button -->
           <b-button 
             variant="outline-secondary" 
@@ -98,15 +87,80 @@
           <div class="small text-muted">Total Teams</div>
           <div class="font-weight-bold">{{ teams.length }}</div>
         </b-col>
-        <!-- <b-col md="3">
-          <div class="small text-muted">Status</div>
-          <div>
-            <b-badge :variant="employee.is_active ? 'success' : 'danger'">
-              {{ employee.is_active ? 'Active' : 'Inactive' }}
-            </b-badge>
-          </div>
-        </b-col> -->
       </b-row>
+    </b-card>
+
+    <!-- Leave Allocation Statistics Section -->
+    <b-card class="mt-4" v-if="stats.allocated && Object.keys(stats.allocated).length > 0">
+      <b-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0">Leave Allocation Statistics</h5>
+            <div class="small text-muted">
+              Current year: {{ currentYear }}
+            </div>
+          </div>
+          <b-form-select 
+            v-model="currentYear" 
+            :options="yearOptions" 
+            size="sm" 
+            style="width: 120px;"
+            @change="changeYear"
+          />
+        </div>
+      </b-card-header>
+      <b-card-body>
+        <b-row>
+
+          <!-- Other Leave Types (Dynamic) -->
+          <template v-for="(value, key) in stats.allocated">
+            <b-col 
+              md="3" sm="6" 
+              class="mb-3" 
+              :key="key"
+              v-if="!['annual', 'sick', 'personal', 'emergency', 'special', 'maternity', 'unpaid'].includes(key)"
+            >
+              <b-card no-body class="text-center h-100" :class="getCardClass('other')">
+                <b-card-body class="py-3">
+                  <h6 class="text-uppercase text-muted small mb-2">{{ formatLeaveTypeName(key) }}</h6>
+                  <h3 class="mb-2">{{ stats.used[key] || 0 }}/{{ value }}</h3>
+                  <b-progress :value="getUsagePercentage(key)" height="6px" class="mb-2"></b-progress>
+                  <div class="d-flex justify-content-between small">
+                    <span>Used</span>
+                    <span>{{ stats.remaining[key] || value }} remaining</span>
+                  </div>
+                </b-card-body>
+              </b-card>
+            </b-col>
+          </template>
+
+          <!-- Total Summary -->
+          <b-col md="12" class="mt-3">
+            <b-card no-body class="border-primary">
+              <b-card-body class="py-2">
+                <b-row class="align-items-center">
+                  <b-col md="4" class="text-center">
+                    <h5 class="mb-1">Total Allocated</h5>
+                    <h2 class="text-primary mb-0">{{ stats.total.allocated }}</h2>
+                  </b-col>
+                  <b-col md="4" class="text-center">
+                    <h5 class="mb-1">Total Used</h5>
+                    <h2 class="text-info mb-0">{{ stats.total.used }}</h2>
+                  </b-col>
+                  <b-col md="4" class="text-center">
+                    <h5 class="mb-1">Balance</h5>
+                    <h2 class="text-success mb-0">{{ stats.total.balance }}</h2>
+                  </b-col>
+                </b-row>
+              </b-card-body>
+              <b-card-footer class="py-2 text-center small text-muted">
+                <feather-icon icon="CalendarIcon" size="12" class="mr-1" />
+                Year: {{ currentYear }} | Last Updated: {{ formatDate(stats.lastUpdated) }}
+              </b-card-footer>
+            </b-card>
+          </b-col>
+        </b-row>
+      </b-card-body>
     </b-card>
 
     <!-- Teams Section (if user is in teams) -->
@@ -656,6 +710,8 @@ export default {
   name: 'EmployeeProfileWithDayOff',
   components: { BaseTable, loading },
   data() {
+    const currentYear = new Date().getFullYear();
+    
     return {
       employeeId: this.$route.params.employeeId,
       employee: {
@@ -668,7 +724,11 @@ export default {
         is_active: true,
         created_at: '',
         is_team_lead: false,
-        is_manager: false
+        is_manager: false,
+        annual_leave_days: 18,
+        sick_leave_days: 14,
+        personal_leave_days: 5,
+        emergency_leave_days: 5
       },
       
       teams: [],
@@ -720,7 +780,6 @@ export default {
         { key: 'actions', label: 'Actions' }
       ],
       teamRoleOptions: [
-        // { value: null, text: 'Select Role', disabled: true },
         { value: 'manager', text: 'Manager' },
         { value: 'team_lead', text: 'Team Lead' },
         { value: 'senior', text: 'Senior' },
@@ -730,7 +789,25 @@ export default {
       halfDayOptions: [
         { value: 'first_half', text: 'First Half' },
         { value: 'second_half', text: 'Second Half' }
-      ]
+      ],
+      
+      // Statistics Data
+      stats: {
+        allocated: {},
+        used: {},
+        remaining: {},
+        total: {
+          allocated: 0,
+          used: 0,
+          balance: 0
+        },
+        lastUpdated: null
+      },
+      currentYear: currentYear,
+      yearOptions: Array.from({length: 5}, (_, i) => {
+        const year = currentYear - i;
+        return { value: year, text: year.toString() }
+      })
     }
   },
   computed: {
@@ -790,11 +867,22 @@ export default {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
       
       return diffDays === 1;
+    },
+    
+    leaveTypeMapping() {
+      return {
+        'Annual Leave': 'annual',
+        'Sick Leave': 'sick',
+        'Personal Leave': 'personal',
+        'Emergency Leave': 'emergency',
+        'Special Leave': 'special',
+        'Maternity Leave': 'maternity',
+        'Paternity Leave': 'maternity',
+        'Unpaid Leave': 'unpaid'
+      };
     }
   },
   methods: {
-    // IMPORTANT: Make sure all methods referenced in template are defined here
-    
     // 1. Auth methods
     auth() {
       return this.$store.state.user || { id: null, role: null, user_type: null };
@@ -882,6 +970,163 @@ export default {
         'Emergency Leave': 'danger'
       };
       return variants[typeName] || 'secondary';
+    },
+    
+    // Statistics Methods
+    getCardClass(type) {
+      const classes = {
+        annual: 'border-success',
+        sick: 'border-info',
+        personal: 'border-primary',
+        emergency: 'border-danger',
+        special: 'border-warning',
+        maternity: 'border-purple',
+        unpaid: 'border-secondary',
+        other: 'border-light'
+      };
+      return classes[type] || 'border-light';
+    },
+    
+    getUsagePercentage(type) {
+      if (!this.stats.allocated[type] || this.stats.allocated[type] === 0) return 0;
+      const used = this.stats.used[type] || 0;
+      return (used / this.stats.allocated[type]) * 100;
+    },
+    
+    formatLeaveTypeName(key) {
+      // Convert snake_case or camelCase to Title Case
+      return key
+        .replace(/_/g, ' ')
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, str => str.toUpperCase())
+        .replace(/\b\w/g, l => l.toUpperCase());
+    },
+    
+    async loadLeaveStatistics() {
+      try {
+        this.loading = true;
+        
+        // Try to fetch from API if available
+        try {
+          const response = await api.get(`/users/${this.employeeId}/leave-statistics`, {
+            params: { year: this.currentYear }
+          });
+          
+          if (response.data.success) {
+            this.stats = response.data.data;
+            return;
+          }
+        } catch (apiError) {
+          console.log('No specific leave statistics API, calculating from data...');
+        }
+        
+        // Fallback: Calculate from existing data
+        this.calculateLeaveStats();
+        
+      } catch (error) {
+        console.error('Error loading leave statistics:', error);
+        // Still try to calculate from data
+        this.calculateLeaveStats();
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    calculateLeaveStats() {
+      // Initialize stats object
+      this.stats = {
+        allocated: this.getDefaultAllocation(),
+        used: {},
+        remaining: {},
+        total: {
+          allocated: 0,
+          used: 0,
+          balance: 0
+        },
+        lastUpdated: new Date().toISOString()
+      };
+      
+      // Calculate used days from day off requests
+      this.calculateUsedDays();
+      
+      // Calculate remaining and totals
+      this.calculateRemainingAndTotals();
+    },
+    
+    getDefaultAllocation() {
+      // Default allocation based on company policy or employee data
+      return {
+        annual: this.employee.annual_leave_days || 18,
+        sick: this.employee.sick_leave_days || 14,
+        personal: this.employee.personal_leave_days || 5,
+        emergency: this.employee.emergency_leave_days || 5,
+        special: 3, // Default special leave days
+        maternity: 90, // Default maternity/paternity leave
+        unpaid: 0 // Unlimited by default
+      };
+    },
+    
+    calculateUsedDays() {
+      // Reset used days
+      this.stats.used = {};
+      
+      // Filter approved day off requests for current year
+      const currentYearRequests = this.dayOffRequests.filter(request => {
+        if (!request.from_date || request.status !== 'approved') return false;
+        const year = new Date(request.from_date).getFullYear();
+        return year === this.currentYear;
+      });
+      
+      // Calculate used days per leave type
+      currentYearRequests.forEach(request => {
+        if (!request.type || !request.type.name) return;
+        
+        const typeName = request.type.name;
+        const mappedType = this.leaveTypeMapping[typeName] || typeName.toLowerCase();
+        
+        if (!this.stats.used[mappedType]) {
+          this.stats.used[mappedType] = 0;
+        }
+        
+        // Add total days (half days count as 0.5)
+        if (request.is_half_day) {
+          this.stats.used[mappedType] += 0.5;
+        } else {
+          this.stats.used[mappedType] += request.total_days || 1;
+        }
+      });
+    },
+    
+    calculateRemainingAndTotals() {
+      // Calculate remaining days
+      this.stats.remaining = {};
+      this.stats.total.allocated = 0;
+      this.stats.total.used = 0;
+      
+      Object.keys(this.stats.allocated).forEach(type => {
+        const allocated = this.stats.allocated[type];
+        const used = this.stats.used[type] || 0;
+        
+        // For unlimited types like unpaid leave
+        if (allocated === 0) {
+          this.stats.remaining[type] = 'Unlimited';
+        } else {
+          this.stats.remaining[type] = Math.max(0, allocated - used);
+        }
+        
+        // Add to totals (skip unlimited types from total)
+        if (allocated > 0) {
+          this.stats.total.allocated += allocated;
+          this.stats.total.used += used;
+        }
+      });
+      
+      this.stats.total.balance = Math.max(0, this.stats.total.allocated - this.stats.total.used);
+    },
+    
+    changeYear(year) {
+      this.currentYear = year;
+      this.loadLeaveStatistics();
     },
     
     // 3. Load data methods
@@ -983,6 +1228,9 @@ export default {
         this.dayOffTotalRows = response.data.total;
         this.dayOffCurrentPage = response.data.current_page || page;
         this.dayOffPerPage = response.data.per_page || perPage;
+        
+        // Refresh statistics when day off requests are loaded
+        this.loadLeaveStatistics();
       } catch (error) {
         console.error('Error loading day off requests:', error);
         this.$bvToast.toast('Error loading day off requests', {
@@ -1294,6 +1542,7 @@ export default {
     this.loadAttendance();
     this.loadDayOffRequests();
     this.loadLeaveTypes();
+    this.loadLeaveStatistics();
   }
 };
 </script>
@@ -1353,6 +1602,65 @@ export default {
   background: #555;
 }
 
+/* Statistics Styles */
+.border-purple {
+  border-color: #6f42c1 !important;
+}
+
+.progress {
+  border-radius: 10px;
+}
+
+.card {
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+h3 {
+  font-weight: 600;
+}
+
+.text-primary {
+  color: #007bff !important;
+}
+
+.text-info {
+  color: #17a2b8 !important;
+}
+
+.text-success {
+  color: #28a745 !important;
+}
+
+.small {
+  font-size: 0.875rem;
+}
+
+/* Progress bar variants */
+.progress-bar.bg-success {
+  background-color: #28a745 !important;
+}
+
+.progress-bar.bg-info {
+  background-color: #17a2b8 !important;
+}
+
+.progress-bar.bg-primary {
+  background-color: #007bff !important;
+}
+
+.progress-bar.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.progress-bar.bg-warning {
+  background-color: #ffc107 !important;
+}
+
 @media (max-width: 768px) {
   .team-card-assign .row > div {
     margin-bottom: 10px;
@@ -1364,6 +1672,19 @@ export default {
   
   .team-role-selection {
     max-height: 200px;
+  }
+  
+  /* Responsive statistics */
+  .col-sm-6 {
+    margin-bottom: 15px;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.75rem;
   }
 }
 </style>

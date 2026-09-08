@@ -7,6 +7,10 @@ export default [
       layout: 'content', // Vuexy’s main layout (with sidebar)
       requiresAuth: true,
       roles: ['employee'],
+      breadcrumb: [
+       
+        { text: 'Employee Dashboard', active: true }
+      ]
     },
   },
   {
@@ -17,6 +21,9 @@ export default [
       layout: 'content', // Vuexy’s main layout (with sidebar)
       requiresAuth: true,
       roles: ['admin'],
+      breadcrumb: [
+        { text: 'Dashboard' , active: true }
+      ],
     },
 
   },
@@ -27,6 +34,10 @@ export default [
     meta: {
       layout: 'content', // Vuexy’s main layout (with sidebar)
       requiresAuth: true,
+      breadcrumb: [
+       
+        { text: 'Attendance', active: true }
+      ],
     },
   },
   {
@@ -37,6 +48,10 @@ export default [
       layout: 'content', // Vuexy’s main layout (with sidebar)
       requiresAuth: true,
       roles: ['admin','manager'],
+      breadcrumb: [
+       
+        { text: 'Employees', active: true }
+      ],
     },
   },
   {
@@ -50,7 +65,7 @@ export default [
       breadcrumb: [
         {
           text: 'Dashboard',
-          to: '/dashboard',
+          to: '/welcome',
         },
         {
           text: 'Employees',

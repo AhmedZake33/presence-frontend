@@ -7,6 +7,10 @@ export default [
             layout: 'content', // Vuexy’s main layout (with sidebar)
             requiresAuth: true,
             roles: ['admin'],
+                breadcrumb: [
+                   
+                    { text: 'Teams', active: true }
+                ],
         },
     },
 ]

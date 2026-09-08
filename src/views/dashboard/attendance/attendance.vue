@@ -16,9 +16,17 @@
         </div>
         <div>
           <b-button
+            v-if="!canCheckIn || loading"
             size="lg"
             variant="success"
-            :disabled="!canCheckIn || loading"
+            disabled="true"
+            >
+            Check In
+          </b-button>
+          <b-button
+            v-else
+            size="lg"
+            variant="success"
             @click="clock('in')"
           >
             Check In
@@ -45,6 +53,15 @@
         </div>
         <div>
           <b-button
+            v-if="!canCheckOut || loading"
+            size="lg"
+            variant="danger"
+            disabled="true"
+            >
+            Check Out
+          </b-button>
+          <b-button
+            v-else
             size="lg"
             variant="danger"
             :disabled="!canCheckOut || loading"

@@ -6,6 +6,10 @@ export default [
     meta: {
       resource: 'ACL',
       action: 'read',
+      breadcrumb: [
+        { text: 'Extensions' },
+        { text: 'Access Control', active: true }
+      ]
     },
   },
 ]

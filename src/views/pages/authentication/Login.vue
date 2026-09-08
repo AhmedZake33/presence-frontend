@@ -2,15 +2,6 @@
   <div class="auth-wrapper auth-v2">
     <b-row class="auth-inner m-0">
 
-      <!-- Brand logo-->
-      <b-link class="brand-logo">
-        <vuexy-logo />
-        <h2 class="brand-text text-primary ml-1">
-          Vuexy
-        </h2>
-      </b-link>
-      <!-- /Brand logo-->
-
       <!-- Left Text-->
       <b-col
         lg="8"
@@ -99,13 +90,10 @@
                 </validation-provider>
               </b-form-group>
 
-              <!-- forgot password -->
               <b-form-group>
                 <div class="d-flex justify-content-between">
                   <label for="login-password">Password</label>
-                  <!-- <b-link :to="{name:'auth-forgot-password'}">
-                    <small>Forgot Password?</small>
-                  </b-link> -->
+                
                 </div>
                 <validation-provider
                   #default="{ errors }"
@@ -138,18 +126,6 @@
                 </validation-provider>
               </b-form-group>
 
-              <!-- checkbox -->
-              <!-- <b-form-group>
-                <b-form-checkbox
-                  id="remember-me"
-                  v-model="status"
-                  name="checkbox-1"
-                >
-                  Remember Me
-                </b-form-checkbox>
-              </b-form-group> -->
-
-              <!-- submit buttons -->
               <b-button
                 type="submit"
                 variant="primary"
@@ -245,36 +221,36 @@ export default {
   },
   methods: {
     async login() {
-      this.isLoading = true;
+      this.isLoading = true
       try {
-        const res = await api.post("/login", {
-          email: this.userEmail,
-          password: this.password,
-        });
+         const res = await api.post('/login', {
+            email: this.userEmail,
+            password: this.password,
+          }).catch((error) => {
+            console.log(error);
+          });
 
-        try{
-          await store.dispatch('auth/login', { response:res })
-        }catch(err){
-          console.log(err);
-        }
+        console.log('Login response:', res);
 
-        // save token + user
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-        this.$router.replace({name : "welcome"});
-        // this.$router.replace(getHomeRouteForLoggedInUser(res.data.user.type.name))
+        await store.dispatch('auth/login', { response: res })
 
+        localStorage.setItem('token', res.data.token)
+        localStorage.setItem('user', JSON.stringify(res.data.user))
+
+        this.$router.replace({ name: 'welcome' })
 
       } catch (err) {
-        this.$bvToast.toast("Invalid credentials", {
-          title: "Error",
-          variant: "danger",
+        this.$bvToast.toast('Invalid email or password', {
+          title: 'Login Failed',
+          variant: 'danger',
           solid: true,
-        });
+        })
       } finally {
-        this.isLoading = false;
+        this.isLoading = false
       }
-    }
+
+    },
+
   },
 }
 </script>

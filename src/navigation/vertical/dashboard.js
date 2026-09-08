@@ -31,12 +31,12 @@ export default [
     route: 'attendance-dashboard',
     meta: { role: ['admin'] },
   },
-  {
-    title: 'Profile',
-    icon: 'UserIcon',
-    route: 'profile',
-    meta: { role: ['employee', 'admin', 'manager'] },
-  },
+  // {
+  //   title: 'Profile',
+  //   icon: 'UserIcon',
+  //   route: 'profile',
+  //   meta: { role: ['employee', 'admin', 'manager'] },
+  // },
   {
     title: 'Employees',
     icon: 'UserIcon',

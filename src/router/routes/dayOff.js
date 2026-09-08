@@ -7,6 +7,10 @@ export default [
       layout: 'content', // Vuexy’s main layout (with sidebar)
       requiresAuth: true,
       roles: ['employee'],
+      breadcrumb: [
+       
+        { text: 'Day Off', active: true }
+      ],
     }
   },
   {
@@ -17,6 +21,10 @@ export default [
       layout: 'content',
       requiresAuth: true,
       roles: ['admin','manager'],
+      breadcrumb: [
+       
+        { text: 'Day Off Requests', active: true }
+      ],
     }
   },
 ]

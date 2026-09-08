@@ -231,12 +231,11 @@
             </b-col>
             <b-col
               md="1"
-              class="d-flex align-items-end"
+              class="d-flex align-items-center"
             >
               <b-button
                 type="submit"
                 variant="success"
-                class="mb-3"
               >
                 <feather-icon icon="PlusIcon" />
               </b-button>
@@ -247,6 +246,11 @@
     </b-card>
 
     <!-- Blackout Periods Section -->
+    <b-card class="mt-4">
+      <b-card-header>
+        
+      </b-card-header>
+      <b-card-body>
     <BaseTable
       title="Blackout Periods"
       :items="blackoutPeriods"
@@ -289,8 +293,7 @@
         </b-button-group>
       </template>
     </BaseTable>
-
-    <b-form
+     <b-form
       class="mt-3"
       @submit.prevent="addBlackoutPeriod"
     >
@@ -331,22 +334,21 @@
         </b-col>
         <b-col
           md="1"
-          class="d-flex align-items-end"
+          class="d-flex align-items-center"
         >
           <b-button
             type="submit"
             variant="success"
-            class="mb-3"
           >
             <feather-icon icon="PlusIcon" />
           </b-button>
         </b-col>
       </b-row>
     </b-form>
+   
     </b-card-body>
     </b-card>
-    </b-card-body>
-    </b-card>
+    
 
     <!-- Leave Type Modal -->
     <b-modal

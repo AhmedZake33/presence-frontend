@@ -3,6 +3,13 @@ export default [
     path: '/apps/calendar',
     name: 'apps-calendar',
     component: () => import('@/views/apps/calendar/Calendar.vue'),
+    meta: {
+      pageTitle: 'Calendar',
+      breadcrumb: [
+        { text: 'Apps' },
+        { text: 'Calendar', active: true }
+      ]
+    }
   },
 
   // *===============================================---*
@@ -15,6 +22,10 @@ export default [
     meta: {
       contentRenderer: 'sidebar-left',
       contentClass: 'email-application',
+      breadcrumb: [
+        { text: 'Apps' },
+        { text: 'Email', active: true }
+      ]
     },
   },
   {
@@ -56,6 +67,10 @@ export default [
     meta: {
       contentRenderer: 'sidebar-left',
       contentClass: 'todo-application',
+      breadcrumb: [
+        { text: 'Apps' },
+        { text: 'Todo', active: true }
+      ]
     },
   },
   {
@@ -97,6 +112,10 @@ export default [
     meta: {
       contentRenderer: 'sidebar-left',
       contentClass: 'chat-application',
+      breadcrumb: [
+        { text: 'Apps' },
+        { text: 'Chat', active: true }
+      ]
     },
   },
 
@@ -188,6 +207,12 @@ export default [
     path: '/apps/users/list',
     name: 'apps-users-list',
     component: () => import('@/views/apps/user/users-list/UsersList.vue'),
+    meta: {
+      breadcrumb: [
+        { text: 'Apps' },
+        { text: 'Users', active: true }
+      ]
+    },
   },
   {
     path: '/apps/users/view/:id',
@@ -205,6 +230,12 @@ export default [
     path: '/apps/invoice/list',
     name: 'apps-invoice-list',
     component: () => import('@/views/apps/invoice/invoice-list/InvoiceList.vue'),
+    meta: {
+      breadcrumb: [
+        { text: 'Apps' },
+        { text: 'Invoice', active: true }
+      ]
+    },
   },
   {
     path: '/apps/invoice/preview/:id',

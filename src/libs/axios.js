@@ -1,25 +1,32 @@
-// src/libs/axios.js
-import axios from 'axios'
-import router from '@/router'
+import axios from "axios";
 
-const api = axios.create({ baseURL: 'http://localhost:8000/api' })
+const api = axios.create({
+  baseURL: process.env.VUE_APP_API_URL || "http://127.0.0.1:8000/api",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
 
-api.interceptors.request.use(cfg => {
-  const token = localStorage.getItem('token')
-  if (token) cfg.headers.Authorization = `Bearer ${token}`
-  return cfg
-})
-
-api.interceptors.response.use(
-  res => res,
-  err => {
-    if (err.response && err.response.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      router.replace({ name: 'login' }).catch(()=>{})
+// 🔐 Attach token if exists
+api.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return Promise.reject(err)
-  }
-)
+    return config;
+  },
+  error => Promise.reject(error)
+);
 
-export default api
+// 🔥 IMPORTANT: reject errors
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.log(error.response);
+    return error;
+  }
+);
+
+export default api;

@@ -176,13 +176,14 @@ export default [
     name: 'profile',
     component: () => import('@/views/pages/profile/Profile.vue'),
     meta: {
-      pageTitle: 'Profile',
+      // pageTitle: 'Profile',
       breadcrumb: [
         {
           text: 'Profile',
           active: true,
         },
       ],
+      role: ['employee', 'admin', 'manager']
     },
   },
 

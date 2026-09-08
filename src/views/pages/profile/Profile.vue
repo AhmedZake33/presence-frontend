@@ -36,11 +36,11 @@
                 <small class="text-muted ml-2">Loading team info...</small>
               </div>
               <div v-else>
-                <p class="mb-1">
+                <p class="mb-1" v-if="!isAdmin">
                   <strong>Team:</strong> 
                   {{ user.primaryTeam ? user.primaryTeam.name : 'Not set' }}
                 </p>
-                <p class="mb-1">
+                <p class="mb-1" v-if="!isAdmin">
                   <strong>Role:</strong> 
                   <span v-if="user.primaryTeam && user.primaryTeam.pivot">
                     {{ formatName(user.primaryTeam.pivot.role) }}
@@ -160,6 +160,11 @@ export default {
       }
     }
   },
+  computed: {
+    isAdmin() {
+      return this.user.type == 1;
+    }
+  },
   mounted() {
     this.loadProfile();
   },
@@ -195,7 +200,8 @@ export default {
     async updateProfile() {
       this.saving = true;
       try {
-        await api.put('/profile', this.profileForm);
+        const response = await api.put('/profile', this.profileForm);
+        localStorage.setItem("user", JSON.stringify(response.data.user)); // Update user data in localStorageresponse.data.user);
         this.user.name = this.profileForm.name;
         this.$bvToast.toast('Profile updated successfully', {
           variant: 'success',

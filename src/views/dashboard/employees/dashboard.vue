@@ -64,7 +64,48 @@
 
     <!-- Leave Type Breakdown -->
     <b-row class="mb-4">
-      <b-col lg="8" class="mb-4">
+
+       <b-col lg="12" class="mb-4">
+        <b-card>
+          <b-card-header>
+            <h5 class="mb-0">Request Status Distribution</h5>
+          </b-card-header>
+          <b-card-body class="text-center">
+            <div v-if="requestStats.total_requests > 0">
+              <b-row class="mb-3">
+                <b-col>
+                  <vue-apex-chart
+                    type="donut"
+                    height="300"
+                    :options="chartOptions"
+                    :series="statusSeries"
+                  />
+                </b-col>
+              </b-row>
+              <b-row>
+                <b-col v-for="stat in requestStats.breakdown" :key="stat.status" class="mb-2">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                      <div 
+                        class="status-indicator mr-2" 
+                        :style="{ backgroundColor: getStatusColor(stat.status) }"
+                      ></div>
+                      <span class="text-capitalize">{{ stat.status }}</span>
+                    </div>
+                    <strong>{{ stat.count }} ({{ stat.percentage }}%)</strong>
+                  </div>
+                </b-col>
+              </b-row>
+            </div>
+            <div v-else class="text-muted">
+              <feather-icon icon="InboxIcon" size="48" class="mb-2" />
+              <p>No leave requests yet</p>
+            </div>
+          </b-card-body>
+        </b-card>
+      </b-col>
+      
+      <b-col lg="12" class="mb-4">
         <b-card>
           <b-card-header>
             <h5 class="mb-0">Leave Balance by Type</h5>
@@ -114,45 +155,7 @@
         </b-card>
       </b-col>
 
-      <b-col lg="4" class="mb-4">
-        <b-card>
-          <b-card-header>
-            <h5 class="mb-0">Request Status Distribution</h5>
-          </b-card-header>
-          <b-card-body class="text-center">
-            <div v-if="requestStats.total_requests > 0">
-              <b-row class="mb-3">
-                <b-col>
-                  <vue-apex-chart
-                    type="donut"
-                    height="300"
-                    :options="chartOptions"
-                    :series="statusSeries"
-                  />
-                </b-col>
-              </b-row>
-              <b-row>
-                <b-col v-for="stat in requestStats.breakdown" :key="stat.status" class="mb-2">
-                  <div class="d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center">
-                      <div 
-                        class="status-indicator mr-2" 
-                        :style="{ backgroundColor: getStatusColor(stat.status) }"
-                      ></div>
-                      <span class="text-capitalize">{{ stat.status }}</span>
-                    </div>
-                    <strong>{{ stat.count }} ({{ stat.percentage }}%)</strong>
-                  </div>
-                </b-col>
-              </b-row>
-            </div>
-            <div v-else class="text-muted">
-              <feather-icon icon="InboxIcon" size="48" class="mb-2" />
-              <p>No leave requests yet</p>
-            </div>
-          </b-card-body>
-        </b-card>
-      </b-col>
+     
     </b-row>
 
     <!-- Recent Activity & Upcoming Leaves -->

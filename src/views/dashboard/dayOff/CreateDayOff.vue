@@ -20,9 +20,7 @@
             </b-col>
             <b-col md="6">
               <div class="text-right">
-                <small class="text-muted" v-if="selectedLeaveType">
-                  Remaining: {{ remainingDays }} days
-                </small>
+               
                 <div v-if="selectedLeaveType && selectedLeaveType.working_days" class="text-muted small">
                   <strong>Working Days:</strong> {{ formattedWorkingDays }}
                 </div>
