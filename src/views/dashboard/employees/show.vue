@@ -330,12 +330,46 @@
     <!-- Attendance Section -->
     <b-card class="mt-4">
       <b-card-header>
-        <h5 class="mb-0">Attendance</h5>
-        <div class="small text-muted">
-          Showing {{ attendanceTotalRows }} attendance records
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0">Attendance</h5>
+            <div class="small text-muted">
+              Showing {{ attendanceTotalRows }} days
+            </div>
+          </div>
         </div>
       </b-card-header>
       <b-card-body>
+        <!-- Date Range Filter -->
+        <b-form @submit.prevent="loadAttendance()" class="row mb-3">
+          <div class="col-md-4">
+            <b-form-group label="From" label-size="sm">
+              <b-form-datepicker
+                v-model="attendanceStartDate"
+                size="sm"
+                placeholder="Start date"
+              />
+            </b-form-group>
+          </div>
+          <div class="col-md-4">
+            <b-form-group label="To" label-size="sm">
+              <b-form-datepicker
+                v-model="attendanceEndDate"
+                size="sm"
+                placeholder="End date"
+              />
+            </b-form-group>
+          </div>
+          <div class="col-md-4 d-flex align-items-end mb-3">
+            <b-button type="submit" variant="primary" size="sm" class="mr-2">
+              Search
+            </b-button>
+            <b-button @click="resetAttendanceFilter" variant="outline-secondary" size="sm">
+              Reset
+            </b-button>
+          </div>
+        </b-form>
+
         <BaseTable
           title=""
           :items="flatRecords"
@@ -347,29 +381,61 @@
           @per-page-changed="onAttendancePerPageChange"
         >
           <template #cell(date)="data">
-            {{ formatDate(data.item.date) }}
+            <span :class="{'text-muted': data.item.day_type === 'weekend' || data.item.day_type === 'future'}">
+              {{ formatDate(data.item.date) }}
+              <br><small class="text-muted">{{ data.item.day_name }}</small>
+            </span>
+          </template>
+
+          <template #cell(day_type)="data">
+            <b-badge :variant="getDayTypeVariant(data.item.day_type)" size="sm">
+              {{ getDayTypeLabel(data.item.day_type) }}
+            </b-badge>
           </template>
 
           <template #cell(check_in)="data">
-            {{ data.item.check_in || '—' }}
-            <b-badge 
-              v-if="data.item.check_in_status === 'late'"
-              variant="warning"
-              class="ml-1"
-            >
-              Late
-            </b-badge>
+            <div v-if="data.item.day_type === 'present' && data.item.check_in">
+              {{ data.item.check_in }}
+              <b-badge
+                v-if="data.item.check_in_status === 'late'"
+                variant="warning"
+                class="ml-1"
+              >
+                Late
+              </b-badge>
+            </div>
+            <div v-else-if="data.item.day_type === 'holiday'" class="text-info">
+              <feather-icon icon="StarIcon" size="14" class="mr-1" />
+              {{ data.item.message }}
+            </div>
+            <div v-else-if="data.item.day_type === 'day_off'" class="text-warning">
+              <feather-icon icon="CoffeeIcon" size="14" class="mr-1" />
+              {{ data.item.message }}
+            </div>
+            <div v-else-if="data.item.day_type === 'weekend'" class="text-muted">
+              Weekend
+            </div>
+            <div v-else-if="data.item.day_type === 'future'" class="text-muted">
+              -
+            </div>
+            <div v-else-if="data.item.day_type === 'absent'" class="text-danger">
+              Absent
+            </div>
+            <div v-else class="text-muted">—</div>
           </template>
 
           <template #cell(check_out)="data">
-            {{ data.item.check_out || '—' }}
-            <b-badge 
-              v-if="data.item.check_out_status === 'early'"
-              variant="info"
-              class="ml-1"
-            >
-              Early
-            </b-badge>
+            <div v-if="data.item.day_type === 'present' && data.item.check_out">
+              {{ data.item.check_out }}
+              <b-badge
+                v-if="data.item.check_out_status === 'early_checkout'"
+                variant="info"
+                class="ml-1"
+              >
+                Early
+              </b-badge>
+            </div>
+            <div v-else class="text-muted">—</div>
           </template>
 
           <template #cell(hours)="data">
@@ -735,8 +801,10 @@ export default {
       attendanceGrouped: [],
       flatRecords: [],
       attendanceCurrentPage: 1,
-      attendancePerPage: 10,
+      attendancePerPage: 31,
       attendanceTotalRows: 0,
+      attendanceStartDate: moment().startOf('month').format('YYYY-MM-DD'),
+      attendanceEndDate: moment().endOf('month').format('YYYY-MM-DD'),
       dayOffRequests: [],
       dayOffCurrentPage: 1,
       dayOffPerPage: 10,
@@ -768,7 +836,8 @@ export default {
       minDate: new Date().toISOString().split('T')[0],
       attendanceFields: [
         { key: 'date', label: 'Date' },
-        { key: 'check_in', label: 'Check In' },
+        { key: 'day_type', label: 'Status' },
+        { key: 'check_in', label: 'Check In / Info' },
         { key: 'check_out', label: 'Check Out' },
         { key: 'hours', label: 'Hours Worked' },
       ],
@@ -971,6 +1040,30 @@ export default {
       };
       return variants[typeName] || 'secondary';
     },
+
+    getDayTypeVariant(dayType) {
+      const variants = {
+        present: 'success',
+        absent: 'danger',
+        holiday: 'info',
+        day_off: 'warning',
+        weekend: 'secondary',
+        future: 'light',
+      };
+      return variants[dayType] || 'secondary';
+    },
+
+    getDayTypeLabel(dayType) {
+      const labels = {
+        present: 'Present',
+        absent: 'Absent',
+        holiday: 'Holiday',
+        day_off: 'Day Off',
+        weekend: 'Weekend',
+        future: 'Upcoming',
+      };
+      return labels[dayType] || dayType;
+    },
     
     // Statistics Methods
     getCardClass(type) {
@@ -1165,17 +1258,19 @@ export default {
       }
     },
     
-    async loadAttendance(page = 1, perPage = 10) {
+    async loadAttendance(page = 1, perPage = 31) {
       try {
         this.loading = true;
         const payload = {
           employeeId: this.employeeId,
           perPage: perPage,
-          page: page
+          page: page,
+          start_date: this.attendanceStartDate,
+          end_date: this.attendanceEndDate,
         };
         const res = await api.post(`/employees/${this.employeeId}/attendance`, payload);
-        this.attendanceGrouped = res.data.data || res.data;
-        this.attendanceTotalRows = res.data.total || res.data.length;
+        const data = res.data.data || res.data;
+        this.attendanceTotalRows = res.data.total || data.length;
         this.attendanceCurrentPage = page;
         this.attendancePerPage = perPage;
         
@@ -1183,7 +1278,7 @@ export default {
           this.employee = res.data.employee;
         }
         
-        this.flattenAttendance();
+        this.flatRecords = data;
       } catch (e) {
         console.error('Error loading attendance:', e);
       } finally {
@@ -1191,29 +1286,11 @@ export default {
       }
     },
     
-    flattenAttendance() {
-      var flat = [];
-      
-      if (this.attendanceGrouped.length === 0) {
-        return;
-      }
-
-      this.attendanceGrouped.forEach(day => {
-        const date = day.date;
-        const check_in = day.check_in ? day.check_in : null;
-        const check_out = day.check_out ? day.check_out : null;
-        const hours = day.total_hours ? day.total_hours : null;
-
-        flat.push({
-          date,
-          check_in,
-          check_out,
-          hours,
-        });
-      });
-      
-      flat.sort((a, b) => (a.date === b.date ? (a.check_in > b.check_in ? 1 : -1) : (a.date < b.date ? 1 : -1)));
-      this.flatRecords = flat;
+    resetAttendanceFilter() {
+      this.attendanceStartDate = moment().startOf('month').format('YYYY-MM-DD');
+      this.attendanceEndDate = moment().endOf('month').format('YYYY-MM-DD');
+      this.attendanceCurrentPage = 1;
+      this.loadAttendance();
     },
     
     async loadDayOffRequests(page = 1, perPage = 10) {

@@ -3,7 +3,6 @@
     <loading :visible="loading" text="Processing..." />
     <div v-if="!checkoutRecord && currentDuration" class="mt-2">
       <h2 class="text-primary mb-0">{{ currentDuration }}</h2>
-      <!-- <small class="text-muted">Active Duration</small> -->
     </div>
     <b-card class="mb-3">
       <div class="d-flex justify-content-between align-items-center">
@@ -27,7 +26,8 @@
             v-else
             size="lg"
             variant="success"
-            @click="clock('in')"
+            :disabled="!canCheckIn || loading"
+            @click="startChallenge('in')"
           >
             Check In
           </b-button>
@@ -38,8 +38,6 @@
         <b-badge variant="primary">Checked in</b-badge>
         <small class="ml-2">at <strong>{{ checkinRecord.time }}</strong></small>
         <small class="ml-2 text-muted">({{ checkinRecord.status || 'status unknown' }})</small>
-        
-        <!-- Timer is now in Navbar -->
       </div>
     </b-card>
 
@@ -65,7 +63,7 @@
             size="lg"
             variant="danger"
             :disabled="!canCheckOut || loading"
-            @click="clock('out')"
+            @click="startChallenge('out')"
           >
             Check Out
           </b-button>
@@ -78,6 +76,46 @@
         <small class="ml-2 text-muted">({{ checkoutRecord.status || 'status unknown' }})</small>
       </div>
     </b-card>
+
+    <!-- Challenge Modal -->
+    <b-modal
+      v-model="challengeModal"
+      title="Security Verification"
+      no-close-on-backdrop
+      no-close-on-esc
+      centered
+      @hidden="resetChallenge"
+    >
+      <div v-if="challengeQuestion" class="text-center">
+        <p class="mb-2">Please solve the following to continue:</p>
+        <h3 class="text-primary mb-3">{{ challengeQuestion }}</h3>
+        <b-form-input
+          v-model="challengeAnswer"
+          type="number"
+          placeholder="Your answer"
+          class="text-center"
+          :state="challengeError ? false : null"
+          @keyup.enter="submitChallenge"
+          autofocus
+        />
+        <b-form-invalid-feedback :state="challengeError ? false : null">
+          {{ challengeError }}
+        </b-form-invalid-feedback>
+      </div>
+      <div v-else class="text-center">
+        <b-spinner small /> Loading question...
+      </div>
+      <template #modal-footer>
+        <b-button variant="secondary" @click="challengeModal = false">Cancel</b-button>
+        <b-button
+          variant="primary"
+          :disabled="challengeAnswer === '' || challengeAnswer === null || challengeSubmitting"
+          @click="submitChallenge"
+        >
+          <b-spinner small v-if="challengeSubmitting" /> Submit
+        </b-button>
+      </template>
+    </b-modal>
   </div>
 </template>
 
@@ -93,6 +131,14 @@ export default {
       canData: null, // response from /attendance/can-clock
       todayRecords: [], // response from /attendance/today
       errorMessage: null,
+      // Challenge state
+      challengeModal: false,
+      challengeQuestion: null,
+      challengeToken: null,
+      challengeAnswer: null,
+      challengeError: null,
+      challengeType: null, // 'in' or 'out'
+      challengeSubmitting: false,
     };
   },
   computed: {
@@ -178,47 +224,96 @@ export default {
       }
     },
 
-    async clock(type) {
-      // type = 'in' or 'out'
-      this.loading = true;
-      this.errorMessage = null;
+    async startChallenge(type) {
+      this.challengeType = type;
+      this.challengeAnswer = null;
+      this.challengeError = null;
+      this.challengeQuestion = null;
+      this.challengeToken = null;
+      this.challengeModal = true;
 
       try {
-        const res = await api.post("/attendance/clock", { type });
-        // API returns data under res.data.data per updated controller
-        const payload = res.data?.data ?? res.data ?? null;
-
-        // show toast
-        this.$bvToast.toast(`Checked ${type} successfully`, {
-          title: "Success",
-          variant: "success",
-          solid: true,
-        });
-
-        // refresh both can-clock and today's records
-        await this.getCanClock();
-        await this.getToday();
-        
-        // Sync global timer
-        await this.$store.dispatch('attendance/fetchAttendanceStatus');
-
-        // Optionally open modal or show details of created record
-        // e.g. payload.status and payload.meta are available if controller provides them
+        const res = await api.get("/attendance/challenge");
+        const data = res.data?.data ?? res.data;
+        this.challengeToken = data.token;
+        this.challengeQuestion = data.question;
       } catch (err) {
-        // show server message if present
-        const msg =
-          err?.response?.data?.message ??
-          err?.response?.data?.error ??
-          err?.response?.data ??
-          "Failed to process request";
-        this.$bvToast.toast(msg, {
+        this.challengeModal = false;
+        this.$bvToast.toast("Failed to load security question. Please try again.", {
           title: "Error",
           variant: "danger",
           solid: true,
         });
-      } finally {
-        this.loading = false;
       }
+    },
+
+    resetChallenge() {
+      this.challengeQuestion = null;
+      this.challengeToken = null;
+      this.challengeAnswer = null;
+      this.challengeError = null;
+      this.challengeType = null;
+      this.challengeSubmitting = false;
+    },
+
+    async submitChallenge() {
+      if (this.challengeAnswer === null || this.challengeAnswer === '') return;
+      this.challengeSubmitting = true;
+      this.challengeError = null;
+
+      try {
+        this.loading = true;
+        await this.clock(this.challengeType, this.challengeToken, parseInt(this.challengeAnswer));
+        this.challengeModal = false;
+      } catch (err) {
+        this.loading = false;
+        // If challenge failed, fetch a new one
+        const msg =
+          err?.response?.data?.message ??
+          err?.response?.data?.error ??
+          "Incorrect answer. Please try again.";
+        this.challengeError = msg;
+        // Reload a new challenge question
+        try {
+          const res = await api.get("/attendance/challenge");
+          const data = res.data?.data ?? res.data;
+          this.challengeToken = data.token;
+          this.challengeQuestion = data.question;
+          this.challengeAnswer = null;
+        } catch (_) {
+          this.challengeModal = false;
+        }
+      } finally {
+        this.challengeSubmitting = false;
+      }
+    },
+
+    async clock(type, challengeToken, challengeAnswer) {
+      // type = 'in' or 'out'
+      this.errorMessage = null;
+
+      const res = await api.post("/attendance/clock", {
+        type,
+        challenge_token: challengeToken,
+        challenge_answer: challengeAnswer,
+      });
+      // API returns data under res.data.data per updated controller
+      const payload = res.data?.data ?? res.data ?? null;
+
+      // show toast
+      this.$bvToast.toast(`Checked ${type} successfully`, {
+        title: "Success",
+        variant: "success",
+        solid: true,
+      });
+
+      // refresh both can-clock and today's records
+      await this.getCanClock();
+      await this.getToday();
+      
+      // Sync global timer
+      await this.$store.dispatch('attendance/fetchAttendanceStatus');
+      this.loading = false;
     },
   },
 };

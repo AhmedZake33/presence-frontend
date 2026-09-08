@@ -33,7 +33,6 @@
               <b-form-group label="From Date">
                 <b-form-datepicker
                   v-model="requestForm.from_date"
-                  :min="minDate"
                   required
                   @input="onDateChange"
                 />
@@ -43,7 +42,7 @@
               <b-form-group label="To Date">
                 <b-form-datepicker
                   v-model="requestForm.to_date"
-                  :min="requestForm.from_date || minDate"
+                  :min="requestForm.from_date || null"
                   required
                   @input="onDateChange"
                 />
@@ -310,7 +309,6 @@ export default {
       showDetailsModal: false,
       selectedRequestToDelete: null,
       selectedRequestDetails: null,
-      minDate: new Date().toISOString().split('T')[0],
       halfDayOptions: [
         { value: 'first_half', text: 'First Half' },
         { value: 'second_half', text: 'Second Half' }
